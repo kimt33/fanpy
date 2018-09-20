@@ -8,6 +8,7 @@ from wfns.wfn.ci.base import CIWavefunction
 from wfns.backend import slater, sd_list
 
 
+# FIXME: needs a refactor
 class SystemEquations(BaseSchrodinger):
     r"""Schrodinger equation as a system of equations.
 
@@ -342,6 +343,9 @@ class SystemEquations(BaseSchrodinger):
                              'shape, {0}.'.format((self.nproj + num_constraints, )))
         self.eqn_weights = eqn_weights
 
+    # FIXME: refactor. Maybe use the methods `get_energy_one_proj` and `gradient.objective` instead
+    #        of trying to save pennies?
+    # CHECK: that they are pennies
     def objective(self, params):
         r"""Return the values of the system of equations.
 
@@ -419,6 +423,9 @@ class SystemEquations(BaseSchrodinger):
 
         return obj
 
+    # FIXME: refactor. Maybe use the methods `get_energy_one_proj`, `constraint.objective`, and
+    #        `constraint.gradient` instead of trying to save pennies?
+    # CHECK: that they are pennies
     def jacobian(self, params):
         r"""Return the Jacobian of the objective function.
 
