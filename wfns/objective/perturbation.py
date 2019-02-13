@@ -21,7 +21,7 @@ from wfns.wfn.base import BaseWavefunction
 #        Hamiltonian is fixed
 # FIXME: only LinearlyPerturbedHamiltonian supported (are there others?)
 class HamiltonianPerturbationFirstOrderEquations:
-    """First-order system of equations for the perturbation of the Hamiltonian.
+    r"""First-order system of equations for the perturbation of the Hamiltonian.
 
     Given a system of equations,
 
