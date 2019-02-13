@@ -106,7 +106,7 @@ class FockOperator(RestrictedChemicalHamiltonian):
         Raises
         ------
         ValueError
-            If `sign` is not `1`, `-1` or `None`.
+            If the two Slater determinants do not have the same number of occupid orbitals.
         NotImplementedError
             If `deriv` is not `None`.
 
@@ -119,9 +119,7 @@ class FockOperator(RestrictedChemicalHamiltonian):
         sd1 = slater.internal_sd(sd1)
         sd2 = slater.internal_sd(sd2)
         diff_sd1, diff_sd2 = slater.diff_orbs(sd1, sd2)
-        diff_order = len(diff_sd1)
-
-        if diff_order == 2:
+        if len(diff_sd1) > 1 or len(diff_sd1) != len(diff_sd2):
             return 0.0, 0.0, 0.0
 
         return super().integrate_sd_sd(sd1, sd2, sign=sign, deriv=deriv)
