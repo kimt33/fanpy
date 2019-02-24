@@ -1,7 +1,7 @@
-"""Test wfns.ham.fock."""
+"""Test wfns.ham.generalized_fock."""
 import numpy as np
 from nose.tools import assert_raises
-from wfns.ham.fock import GeneralizedFock, UnrestrictedFock, RestrictedFock
+from wfns.ham.fock import GeneralizedFock
 from wfns.tools import find_datafile
 from wfns.backend.sd_list import sd_list
 
@@ -64,9 +64,7 @@ def test_fock_matrix():
 
     # check that non diagonals are zero (for HF MO's)
     fock_matrix = test.fock_matrix
-    test2 = RestrictedFock(restricted_one_int, restricted_two_int)
     assert np.allclose(fock_matrix - np.diag(np.diag(fock_matrix)), 0)
-    print(np.diag(test2.fock_matrix))
     print(np.diag(fock_matrix)[:4])
     print(np.diag(fock_matrix)[:4] - mo_energies)
     # assert np.allclose(np.diag(fock_matrix), 0)
