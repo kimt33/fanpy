@@ -2,8 +2,10 @@
 import numpy as np
 from wfns.backend import slater
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
+from wfns.ham.generalized_fock import GeneralizedFock
 
 
+# TODO: use multiple inheritance?
 class RestrictedFock(RestrictedChemicalHamiltonian):
     r"""Fock operator using restricted orbitals.
 
@@ -96,14 +98,55 @@ class RestrictedFock(RestrictedChemicalHamiltonian):
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
+    __init__ = GeneralizedFock.__init__
+
+    def assign_ref_sd(self, sd):
+        """Assign the reference Slater determinant used to contract the two electron integrals.
+
+        Parameters
+        ----------
+        ref_sd : int
+            Reference Slater determinant.
+
+        Raises
+        ------
+        TypeError
+            If given `ref_sd` does not have any occupied orbitals.
+            If given `ref_sd` cannot be turned into a Slater determinant (i.e. not integer or list
+            of integers).
+
+        Notes
+        -----
+        This method depends on `nelec`, `nspin`, `spin`, and `seniority`.
+
+        """
+
+        sd = slater.internal_sd(sd)
+        occ_indices = slater.occ_indices(sd)
+        if len(occ_indices) == 0:
+            raise ValueError('Given Slater determinant must have at least one occupied orbital.')
+        if any(i >= self.nspin for i in occ_indices):
+            raise ValueError('Given Slater determinant cannot be created from the given orbitals.')
+        self.ref_sd = sd
+
     def cache_two_ints(self):
         """Cache away contractions of the two electron integrals."""
-        # self._cached_two_int_ikjk = np.einsum('ikjk->ij', self.two_int)
-        # self._cached_two_int_ikkj = -np.einsum('ikkj->ij', self.two_int)
-        # FIXME: not sure why the sum over occupied mo's in the ground state
-        indices = np.array([0, 1])
-        self._cached_two_int_ikjk = np.sum(self.two_int[:, indices, :, indices], axis=0)
-        self._cached_two_int_ikkj = np.sum(self.two_int[:, indices, indices, :], axis=1)
+        nspatial = self.one_int[0].shape[0]
+        ref_sd_alpha, ref_sd_beta = slater.split_spin(self.ref_sd, nspatial)
+        indices_alpha = slater.occ_indices(ref_sd_alpha)
+        indices_beta = slater.occ_indices(ref_sd_beta)
+        self._cached_two_int_ikjk = np.zeros([nspatial, nspatial])
+        self._cached_two_int_ikkj = np.zeros([nspatial, nspatial])
+        if len(indices_alpha) != 0:
+            self._cached_two_int_ikjk += np.sum(self.two_int[:, indices_alpha, :, indices_alpha],
+                                                axis=0)
+            self._cached_two_int_ikkj += np.sum(self.two_int[:, indices_alpha, indices_alpha, :],
+                                                axis=1)
+        if len(indices_beta) != 0:
+            self._cached_two_int_ikjk += np.sum(self.two_int[:, indices_beta, :, indices_beta],
+                                                axis=0)
+            self._cached_two_int_ikkj += np.sum(self.two_int[:, indices_beta, indices_beta, :],
+                                                axis=1)
 
     @property
     def fock_matrix(self):
