@@ -2,6 +2,8 @@
 import numpy as np
 from wfns.backend import slater
 from wfns.ham.unrestricted_chemical import UnrestrictedChemicalHamiltonian
+from wfns.ham.unrestricted_base import BaseUnrestrictedHamiltonian
+from wfns.ham.generalized_fock import GeneralizedFock
 
 
 class UnrestrictedFock(UnrestrictedChemicalHamiltonian):
@@ -97,23 +99,51 @@ class UnrestrictedFock(UnrestrictedChemicalHamiltonian):
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
+    assign_ref_sd = GeneralizedFock.assign_ref_sd
+
+    def __init__(self, one_int, two_int, ref_sd, energy_nuc_nuc=None, params=None):
+        """Initialize the Fock operator.
+
+        Parameters
+        ----------
+        one_int : np.ndarray(K, K)
+            One electron integrals.
+        two_int : np.ndarray(K, K, K, K)
+            Two electron integrals.
+        ref_sd : {int, gmpy2.mpz}
+            Reference Slater determinant on which the two-electron integrals will be contracted.
+        energy_nuc_nuc : {float, None}
+            Nuclear nuclear repulsion energy.
+            Default is `0.0`.
+        params : {np.ndarray(K*(K-1)/2,), None}
+            Parameters of the antihermitian matrix responsible for orbital rotation.
+            Default is no orbital rotation.
+
+        """
+        BaseUnrestrictedHamiltonian.__init__(self, one_int, two_int, energy_nuc_nuc=energy_nuc_nuc)
+        self.set_ref_ints()
+        self.assign_ref_sd(ref_sd)
+        # NOTE: assign_params calls cache_two_ints
+        self.assign_params(params=params)
+
     def cache_two_ints(self):
         """Cache away contractions of the two electron integrals."""
-        # self._cached_two_int_0_ikjk = np.einsum('ikjk->ij', self.two_int[0])
-        # self._cached_two_int_0_ikkj = -np.einsum('ikkj->ij', self.two_int[0])
-        # self._cached_two_int_1_ikjk = np.einsum('ikjk->ij', self.two_int[1])
-        # self._cached_two_int_1_kikj = np.einsum('kikj->ij', self.two_int[1])
-        # self._cached_two_int_2_ikjk = np.einsum('ikjk->ij', self.two_int[2])
-        # self._cached_two_int_2_ikkj = -np.einsum('ikkj->ij', self.two_int[2])
-        # select occupied indices
-        # FIXME: not sure why the sum over occupied mo's in the ground state
-        indices = np.array([0, 1])
-        self._cached_two_int_0_ikjk = np.sum(self.two_int[0][:, indices, :, indices], axis=0)
-        self._cached_two_int_0_ikkj = -np.sum(self.two_int[0][:, indices, indices, :], axis=1)
-        self._cached_two_int_1_ikjk = np.sum(self.two_int[1][:, indices, :, indices], axis=0)
-        self._cached_two_int_1_kikj = np.sum(self.two_int[1][indices, :, indices, :], axis=0)
-        self._cached_two_int_2_ikjk = np.sum(self.two_int[2][:, indices, :, indices], axis=0)
-        self._cached_two_int_2_ikkj = -np.sum(self.two_int[2][:, indices, indices, :], axis=1)
+        nspatial = self.one_int[0].shape[0]
+        ref_sd_alpha, ref_sd_beta = slater.split_spin(self.ref_sd, nspatial)
+        indices_alpha = slater.occ_indices(ref_sd_alpha)
+        indices_beta = slater.occ_indices(ref_sd_beta)
+        self._cached_two_int_0_ikjk = np.sum(self.two_int[0][:, indices_alpha, :, indices_alpha],
+                                             axis=0)
+        self._cached_two_int_0_ikkj = np.sum(self.two_int[0][:, indices_alpha, indices_alpha, :],
+                                             axis=1)
+        self._cached_two_int_1_ikjk = np.sum(self.two_int[1][:, indices_beta, :, indices_beta],
+                                             axis=0)
+        self._cached_two_int_1_kikj = np.sum(self.two_int[1][indices_alpha, :, indices_alpha, :],
+                                             axis=0)
+        self._cached_two_int_2_ikjk = np.sum(self.two_int[2][:, indices_beta, :, indices_beta],
+                                             axis=0)
+        self._cached_two_int_2_ikkj = np.sum(self.two_int[2][:, indices_beta, indices_beta, :],
+                                             axis=1)
 
     @property
     def fock_matrix(self):
@@ -267,7 +297,7 @@ class UnrestrictedFock(UnrestrictedChemicalHamiltonian):
                 exchange -= np.sum(self._cached_two_int_2_ikkj[shared_beta, shared_beta])
 
         # two sd's are different by single excitation
-        elif diff_order == 1:
+        else:
             a, = diff_sd1
             b, = diff_sd2
             spatial_a = slater.spatial_index(a, nspatial)
