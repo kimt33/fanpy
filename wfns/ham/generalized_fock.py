@@ -1,6 +1,7 @@
 """Fock operator using generalized orbitals."""
 import numpy as np
 from wfns.backend import slater
+from wfns.ham.generalized_base import BaseGeneralizedHamiltonian
 from wfns.ham.generalized_chemical import GeneralizedChemicalHamiltonian
 
 
@@ -38,7 +39,7 @@ class GeneralizedFock(GeneralizedChemicalHamiltonian):
 
     Methods
     -------
-    __init__(self, one_int, two_int, orbtype=None, energy_nuc_nuc=None)
+    __init__(self, one_int, two_int, energy_nuc_nuc=None)
         Initialize the Hamiltonian
     assign_energy_nuc_nuc(self, energy_nuc_nuc=None)
         Assigns the nuclear nuclear repulsion.
@@ -58,13 +59,66 @@ class GeneralizedFock(GeneralizedChemicalHamiltonian):
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
+    def __init__(self, one_int, two_int, ref_sd, energy_nuc_nuc=None, params=None):
+        """Initialize the Fock operator.
+
+        Parameters
+        ----------
+        one_int : np.ndarray(K, K)
+            One electron integrals.
+        two_int : np.ndarray(K, K, K, K)
+            Two electron integrals.
+        ref_sd : {int, gmpy2.mpz}
+            Reference Slater determinant on which the two-electron integrals will be contracted.
+        energy_nuc_nuc : {float, None}
+            Nuclear nuclear repulsion energy.
+            Default is `0.0`.
+        params : {np.ndarray(K*(K-1)/2,), None}
+            Parameters of the antihermitian matrix responsible for orbital rotation.
+            Default is no orbital rotation.
+
+        """
+        BaseGeneralizedHamiltonian.__init__(self, one_int, two_int, energy_nuc_nuc=energy_nuc_nuc)
+        self.set_ref_ints()
+        self.assign_ref_sd(ref_sd)
+        # NOTE: assign_params calls cache_two_ints
+        self.assign_params(params=params)
+
+    def assign_ref_sd(self, sd):
+        """Assign the reference Slater determinant used to contract the two electron integrals.
+
+        Parameters
+        ----------
+        ref_sd : int
+            Reference Slater determinant.
+
+        Raises
+        ------
+        TypeError
+            If given `ref_sd` does not have any occupied orbitals.
+            If given `ref_sd` cannot be turned into a Slater determinant (i.e. not integer or list
+            of integers).
+
+        Notes
+        -----
+        This method depends on `nelec`, `nspin`, `spin`, and `seniority`.
+
+        """
+        sd = slater.internal_sd(sd)
+        occ_indices = slater.occ_indices(sd)
+        if len(occ_indices) == 0:
+            raise ValueError('Given Slater determinant must have at least one occupied orbital.')
+        if any(i >= self.nspin for i in occ_indices):
+            raise ValueError('Given Slater determinant cannot be created from the given orbitals.')
+        self.ref_sd = sd
+
     def cache_two_ints(self):
-        """Cache away contractions of the two electron integrals."""
-        # self._cached_two_int_ikjk = np.einsum('ikjk->ij', self.two_int)
-        # self._cached_two_int_ikkj = np.einsum('ikkj->ij', self.two_int)
-        # select occupied indices
-        # FIXME: not sure why the sum over occupied mo's in the ground state
-        indices = np.array([0, 1, 4, 5])
+        """Cache away contractions of the two electron integrals.
+
+        The reference
+
+        """
+        indices = slater.occ_indices(self.ref_sd)
         self._cached_two_int_ikjk = np.sum(self.two_int[:, indices, :, indices], axis=0)
         self._cached_two_int_ikkj = np.sum(self.two_int[:, indices, indices, :], axis=1)
 
@@ -160,7 +214,7 @@ class GeneralizedFock(GeneralizedChemicalHamiltonian):
             exchange -= np.sum(self._cached_two_int_ikkj[shared_indices, shared_indices])
 
         # two sd's are different by single excitation
-        elif diff_order == 1:
+        else:
             a, = diff_sd1
             b, = diff_sd2
             one_electron += self.one_int[a, b]
