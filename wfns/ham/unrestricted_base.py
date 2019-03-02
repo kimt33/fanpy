@@ -4,6 +4,7 @@ from wfns.ham.base import BaseHamiltonian
 
 
 # FIXME: ordering of the words is not consistent with the UnrestrictedChemicalHamiltonian
+# FIXME: add nspatial as a property?
 class BaseUnrestrictedHamiltonian(BaseHamiltonian):
     """Base class for Hamiltonian with unrestricted orbitals.
 

@@ -4,6 +4,7 @@ from wfns.ham.base import BaseHamiltonian
 
 
 # FIXME: ordering of the words is not consistent with the GeneralizedChemicalHamiltonian
+# FIXME: add nspatial as a property?
 class BaseGeneralizedHamiltonian(BaseHamiltonian):
     """Base class for Hamiltonian with generalized orbitals.
 
