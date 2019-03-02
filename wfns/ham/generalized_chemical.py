@@ -69,11 +69,14 @@ class GeneralizedChemicalHamiltonian(BaseGeneralizedHamiltonian):
         energy_nuc_nuc : {float, None}
             Nuclear nuclear repulsion energy.
             Default is `0.0`.
+        params : {np.ndarray(K*(K-1)/2,), None}
+            Parameters of the antihermitian matrix responsible for orbital rotation.
+            Default is no orbital rotation.
 
         """
         super().__init__(one_int, two_int, energy_nuc_nuc=energy_nuc_nuc)
         self.set_ref_ints()
-        self.cache_two_ints()
+        # NOTE: assign_params calls cache_two_ints
         self.assign_params(params=params)
 
     def set_ref_ints(self):
