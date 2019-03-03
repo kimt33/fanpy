@@ -4,8 +4,8 @@ from wfns.ham.base import BaseHamiltonian
 
 
 # NOTE: base class?
-# NOTE: what are the parameters?
 # NOTE: do they share integrals?
+# NOTE: don't need assign_energy_nuc_nuc, assign_integrals
 class LinearlyPerturbedHamiltonian(BaseHamiltonian):
     r"""Hamiltonian that changes linearly from one Hamiltonian to another.
 
@@ -20,6 +20,10 @@ class LinearlyPerturbedHamiltonian(BaseHamiltonian):
     ----------
     params : np.ndarray
         Number between zero and one for controlling the combination of the two Hamiltonians.
+    ham0 : BaseHamiltonian
+        Hamiltonian when the lambda is 0.
+    ham1 : BaseHamiltonian
+        Hamiltonian when the lambda is 1.
 
     Properties
     ----------
@@ -32,7 +36,7 @@ class LinearlyPerturbedHamiltonian(BaseHamiltonian):
 
     Methods
     -------
-    __init__(self, ham1, ham2, params=params)
+    __init__(self, ham1, ham2, params=None)
         Initialize the Hamiltonian
     assign_params(self, params)
         Assign the lambda value for controlling the combination of the two Hamiltonians.
@@ -46,8 +50,23 @@ class LinearlyPerturbedHamiltonian(BaseHamiltonian):
         Integrate the Hamiltonian with against two Slater determinants.
 
     """
-    def __init__(self, ham0, ham1):
-        pass
+    def __init__(self, ham0, ham1, params=None):
+        """Initialize the Hamiltonian.
+
+        Parameters
+        ----------
+        ham0 : BaseHamiltonian
+            Hamiltonian when the lambda is 0.
+        ham1 : BaseHamiltonian
+            Hamiltonian when the lambda is 1.
+        params : {np.ndarray[1], int, float}
+            Lambda value.
+            Must be between (inclusive) zero and one.
+            Default is 0.
+
+        """
+        self.assign_hams(ham0, ham1)
+        self.assign_params(params)
 
     @property
     def dtype(self):
@@ -62,7 +81,7 @@ class LinearlyPerturbedHamiltonian(BaseHamiltonian):
         if self.ham0.dtype == self.ham1.dtype:
             return self.ham1.dtype
         else:
-            # NOTE: assign_hamiltonians only allows Hamiltonians that have data types np.float64 or
+            # NOTE: assign_hams only allows Hamiltonians that have data types np.float64 or
             #       np.complex128
             return np.complex128
 
@@ -80,10 +99,11 @@ class LinearlyPerturbedHamiltonian(BaseHamiltonian):
         It will be assumed that all of the orbitals of the two Hamiltonians will be shared.
 
         """
+        # NOTE: take the minimum of the two nspin's just in case hamiltonians are allowed to have
+        # different number of spin orbitals.
         return min(self.ham0.nspin, self.ham1.nspin)
 
-    # NOTE: check for nspin?
-    def assign_hamiltonians(self, ham0, ham1):
+    def assign_hams(self, ham0, ham1):
         """Assign the Hamiltonians used to construct the perturbation.
 
         Parameters
@@ -98,6 +118,8 @@ class LinearlyPerturbedHamiltonian(BaseHamiltonian):
         TypeError
             If `ham0` or `ham1` is not a child of BaseHamiltonian.
             If `ham0` or `ham1` does not have data type of float or complex.
+        ValueError
+            If `ham0` and `ham1` do not have the same spin.
 
         """
         if not (isinstance(ham0, BaseHamiltonian) and isinstance(ham1, BaseHamiltonian)):
@@ -106,10 +128,17 @@ class LinearlyPerturbedHamiltonian(BaseHamiltonian):
         if not (ham0.dtype in [float, complex] and ham1.dtype in [float, complex]):
             raise TypeError('Given Hamiltonians must be of float or complex data type.')
 
+        # NOTE: I'm not sure if it is smart to support perturbation from Hamiltonians that have
+        # different number of spin orbitals. It should be alright if the first N spin orbitals of
+        # the larger hamiltonian matches with the N spin orbitals of the smaller Hamiltonian.
+        # Otherwise, it might get messy
+        if ham0.nspin != ham1.nspin:
+            raise ValueError('Given Hamiltonians must have the same number of spin orbitals')
+
         self.ham0 = ham0
         self.ham1 = ham1
 
-    def assign_params(self, params):
+    def assign_params(self, params=None):
         """Assign lambda value that controls the linear combination of the Hamiltonians.
 
         Parameters
@@ -117,6 +146,7 @@ class LinearlyPerturbedHamiltonian(BaseHamiltonian):
         params : {np.ndarray[1], int, float}
             Lambda value.
             Must be between (inclusive) zero and one.
+            Default is 0.
 
         Raises
         ------
@@ -126,8 +156,11 @@ class LinearlyPerturbedHamiltonian(BaseHamiltonian):
             If params is not greater than or equal to zero and less than or equal to one.
 
         """
+        if params is None:
+            params = 0.0
+
         if isinstance(params, (int, float)):
-            params = np.array(params)
+            params = np.array(params, dtype=float)
         elif not (isinstance(params, np.ndarray) and params.size == 1):
             raise TypeError('Parameter must be given as an int, float, or one-dimensional numpy '
                             'array.')
@@ -136,10 +169,11 @@ class LinearlyPerturbedHamiltonian(BaseHamiltonian):
             raise ValueError('Parameter must be greater than or equal to zero and less than or '
                              'equal to one.')
 
-        self.params = params
+        super().assign_params(params)
 
     # FIXME: return tuple? or numpy array?
-    def integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None):
+    # FIXME: change all output of integrate_sd_sd to numpy array
+    def integrate_sd_sd(self, sd1, sd2, sign=None, deriv=None, deriv_ham=None):
         r"""Integrate the Hamiltonian with against two Slater determinants.
 
         .. math::
@@ -162,10 +196,16 @@ class LinearlyPerturbedHamiltonian(BaseHamiltonian):
             Computes the sign if none is provided.
             Make sure that the provided sign is correct. It will not be checked to see if its
             correct.
-        deriv : {int, 3-tuple of int, None}
-            Index of the Hamiltonian parameter against which the integral is derivatized.
+        deriv : {int, None}
+            Index of the linearly perturbed Hamiltonian with respect to which the integral is
+            derivatized.
+            Since LinearlyPerturbedHamiltonian only has one parameter (lambda), only 0 will result
+            in derivatization
             Default is no derivatization.
-            If
+        deriv_ham : {int, None}
+            Index of the Hamiltonian (`ham1`) parameter with respect to which the integral is
+            derivatized.
+            Default is no derivatization.
 
         Returns
         -------
@@ -185,23 +225,20 @@ class LinearlyPerturbedHamiltonian(BaseHamiltonian):
             If deriv as an integer is not 0.
 
         """
-        if deriv is None or isinstance(deriv, int):
-            deriv_ham0 = None
-            deriv_ham1 = None
-        elif (isinstance(tuple, deriv) and len(deriv) == 3 and
-              all(i is None or isinstance(i, int) for i in deriv) and
-              len(i for i in deriv if i is None) >= 2):
-            deriv, deriv_ham0, deriv_ham1 = deriv
-        else:
-            raise TypeError('Derivative index must be given as a None, int, or 3-tuple where there '
-                            'is at most one integer and remaining None.')
+        if deriv is not None and not (isinstance(deriv, int) and 0 <= deriv < self.nparams):
+            raise ValueError('Derivative index for the LinearlyPerturbedHamiltonian, `deriv`, must '
+                             'be 0 or None.')
+        if deriv_ham is not None and not (isinstance(deriv_ham, int)
+                                          and 0 <= deriv_ham < self.nparams):
+            raise ValueError('Derivative index for the {}, `deriv_ham`, must be 0 or None.'
+                             ''.format(type(self.ham1).__name__))
+        if deriv is not None and deriv_ham is not None:
+            raise ValueError('Only first order derivative is supported i.e. you cannot derivatize '
+                             'with respect to both lambda and Hamiltonian parameters')
 
-        if isinstance(deriv, int) and deriv != 0:
-            raise ValueError('Derivative index (for this Hamiltonian) can only be 1 (or None).')
-
-        ham0_energies = np.array(self.ham0.integrate_sd_sd(sd1, sd2, sign=sign, deriv=deriv_ham0))
-        ham1_energies = np.array(self.ham1.integrate_sd_sd(sd1, sd2, sign=sign, deriv=deriv_ham1))
+        ham0_integral = np.array(self.ham0.integrate_sd_sd(sd1, sd2, sign=sign))
+        ham1_integral = np.array(self.ham1.integrate_sd_sd(sd1, sd2, sign=sign, deriv=deriv_ham))
         if deriv is None:
-            return tuple((1-self.params) * ham0_energies + self.params * ham1_energies)
+            return tuple((1-self.params) * ham0_integral + self.params * ham1_integral)
         else:
-            return tuple(ham1_energies - ham0_energies)
+            return tuple(ham1_integral - ham0_integral)
