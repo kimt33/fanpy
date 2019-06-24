@@ -33,8 +33,6 @@ class AP1roG(APIG):
         Number of spin orbitals (alpha and beta).
     params : np.ndarray
         Parameters of the wavefunction.
-    memory : float
-        Memory available for the wavefunction.
     dict_orbpair_ind : dict of 2-tuple of int to int
         Dictionary of orbital pair that are not occupied in the reference Slater determinant to the
         column index of the geminal coefficient matrix (after removal of the identity submatrix).
@@ -68,15 +66,12 @@ class AP1roG(APIG):
 
     Methods
     -------
-    __init__(self, nelec, nspin, memory=None, ngem=None, orbpairs=None, ref_sd=None,
-             params=None)
+    __init__(self, nelec, nspin, ngem=None, orbpairs=None, ref_sd=None, params=None)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_memory(self, memory=None)
-        Assign memory available for the wavefunction.
     assign_ngem(self, ngem=None)
         Assign the number of geminals.
     assign_orbpairs(self, orbpairs=None)
@@ -102,9 +97,7 @@ class AP1roG(APIG):
 
     """
 
-    def __init__(
-        self, nelec, nspin, memory=None, ngem=None, orbpairs=None, ref_sd=None, params=None
-    ):
+    def __init__(self, nelec, nspin, ngem=None, orbpairs=None, ref_sd=None, params=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -113,9 +106,6 @@ class AP1roG(APIG):
             Number of electrons.
         nspin : int
             Number of spin orbitals.
-        memory : {float, int, str, None}
-            Memory available for the wavefunction.
-            Default does not limit memory usage (i.e. infinite).
         ngem : {int, None}
             Number of geminals.
         orbpairs : iterable of 2-tuple of ints

@@ -365,3 +365,27 @@ def test_baseschrodinger_get_energy_two_proj():
                     / (olp_n1 ** 2 + olp_n2 ** 2) ** 2
                 ),
             )
+
+
+def test_load_cache():
+    """Test BaseSchrodinger.load_cache."""
+    wfn = CIWavefunction(2, 4)
+    ham = RestrictedChemicalHamiltonian(
+        np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
+    )
+    test = disable_abstract(BaseSchrodinger)(wfn, ham)
+
+    test.load_cache(None)
+    assert test.wfn._cache_fns["overlap"].cache_info().maxsize is None
+    test.load_cache(2000)
+    assert test.wfn._cache_fns["overlap"].cache_info().maxsize == 6
+    test.load_cache(2068)
+    assert test.wfn._cache_fns["overlap"].cache_info().maxsize == 7
+    test.load_cache("10mb")
+    assert test.wfn._cache_fns["overlap"].cache_info().maxsize == 73521
+    test.load_cache("20.1gb")
+    assert test.wfn._cache_fns["overlap"].cache_info().maxsize == 147794109
+    with pytest.raises(TypeError):
+        test.load_cache([])
+    with pytest.raises(ValueError):
+        test.load_cache("20.1kb")

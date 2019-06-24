@@ -47,9 +47,6 @@ def test_assign_wfn():
     test.nelec = 4
     with pytest.raises(ValueError):
         BaseCompositeOneWavefunction.assign_wfn(test, TempWavefunction(5, 10))
-    test.memory = np.inf
-    with pytest.raises(ValueError):
-        BaseCompositeOneWavefunction.assign_wfn(test, TempWavefunction(4, 10, memory="2gb"))
     BaseCompositeOneWavefunction.assign_wfn(test, TempWavefunction(4, 10))
     assert test.wfn.nelec == 4
     assert test.wfn.nspin == 10

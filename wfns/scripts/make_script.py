@@ -304,7 +304,7 @@ def make_script(
 
     output += "# Initialize wavefunction\n"
     wfn_init1 = "wfn = {}(".format(wfn_name)
-    wfn_init2 = "nelec, nspin, params={}, memory={}, {})\n".format(wfn_params, memory, wfn_kwargs)
+    wfn_init2 = "nelec, nspin, params={}, {})\n".format(wfn_params, wfn_kwargs)
     output += "\n".join(
         textwrap.wrap(wfn_init1 + wfn_init2, width=100, subsequent_indent=" " * len(wfn_init1))
     )
@@ -385,23 +385,23 @@ def make_script(
     if objective == "system":
         objective1 = "objective = SystemEquations("
         objective2 = (
-            "wfn, ham, param_selection=param_selection, "
+            "wfn, ham, param_selection=param_selection, memory='{}', "
             "tmpfile='{}', pspace=pspace, refwfn=None, energy_type='compute', "
-            "energy=None, constraints=None, eqn_weights=None)\n".format(save_chk)
+            "energy=None, constraints=None, eqn_weights=None)\n".format(memory, save_chk)
         )
     elif objective == "least_squares":
         objective1 = "objective = LeastSquaresEquations("
         objective2 = (
-            "wfn, ham, param_selection=param_selection, "
+            "wfn, ham, param_selection=param_selection, memory='{}', "
             "tmpfile='{}', pspace=pspace, refwfn=None, energy_type='compute', "
-            "energy=None, constraints=None, eqn_weights=None)\n".format(save_chk)
+            "energy=None, constraints=None, eqn_weights=None)\n".format(memory, save_chk)
         )
     elif objective == "variational":
         objective1 = "objective = TwoSidedEnergy("
         objective2 = (
-            "wfn, ham, param_selection=param_selection, "
+            "wfn, ham, param_selection=param_selection, memory='{}', "
             "tmpfile='{}', pspace_l=pspace, pspace_r=pspace, pspace_n=pspace)\n"
-            "".format(save_chk)
+            "".format(memory, save_chk)
         )
     output += "\n".join(
         textwrap.wrap(objective1 + objective2, width=100, subsequent_indent=" " * len(objective1))

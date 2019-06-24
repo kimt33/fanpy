@@ -1,4 +1,6 @@
 """Base class for objectives related to solving the Schrodinger equation."""
+import sys
+
 import numpy as np
 import wfns.backend.slater as slater
 from wfns.ham.base import BaseHamiltonian
@@ -67,7 +69,7 @@ class BaseSchrodinger(BaseObjective):
     """
 
     # pylint: disable=W0223
-    def __init__(self, wfn, ham, tmpfile="", param_selection=None):
+    def __init__(self, wfn, ham, tmpfile="", param_selection=None, memory=None):
         """Initialize the objective instance.
 
         Parameters
@@ -85,6 +87,12 @@ class BaseSchrodinger(BaseObjective):
             Selection of parameters that will be used to construct the objective.
             If list/tuple, then each entry is a 2-tuple of the parameter object and the numpy
             indexing array for the active parameters. See `ParamMask.__init__` for details.
+        memory : {int, str, None}
+            Memory available for the wavefunction.
+            If an integer is given, then the value is treated to be the number of bytes.
+            If a string is provided, then the memory can be provided as MB or GB, but the string
+            must end in either "mb" or "gb" and must be preceeded by a number (integer or float).
+            Default (value of `None`) does not put any restrictions on the memory.
 
         Raises
         ------
@@ -118,6 +126,7 @@ class BaseSchrodinger(BaseObjective):
             param_selection = ParamMask((self.wfn, None))
 
         super().__init__(param_selection, tmpfile=tmpfile)
+        self.load_cache(memory=memory)
 
     # FIXME: there are problems when wfn is a composite wavefunction (wfn must distinguish between
     #        the different )
@@ -453,3 +462,64 @@ class BaseSchrodinger(BaseObjective):
         )
         d_energy -= d_norm * np.sum(overlaps_l * ci_matrix * overlaps_r) / norm ** 2
         return d_energy
+
+    def load_cache(self, memory=None):
+        """Assign memory available for the objective.
+
+        Parameters
+        ----------
+        memory : {int, str, None}
+            Memory available for the wavefunction.
+            If an integer is given, then the value is treated to be the number of bytes.
+            If a string is provided, then the memory can be provided as MB or GB, but the string
+            must end in either "mb" or "gb" and must be preceeded by a number (integer or float).
+            Default (value of `None`) does not put any restrictions on the memory.
+
+        Raises
+        ------
+        ValueError
+            If memory is given as a string and does not end with "mb" or "gb".
+        TypeError
+            If memory is not given as a None, int, or string.
+
+        Notes
+        -----
+        Depends on attribute `ham` and `wfn`.
+
+        """
+        if memory is None:
+            self.wfn.load_cache()
+            return
+
+        if isinstance(memory, (int, float)):
+            memory = float(memory)
+        elif isinstance(memory, str):
+            if "gb" in memory.lower():
+                memory = 1e9 * float(memory.rstrip("gb ."))
+            elif "mb" in memory.lower():
+                memory = 1e6 * float(memory.rstrip("mb ."))
+            else:
+                raise ValueError('Memory given as a string should end with either "mb" or "gb".')
+        else:
+            raise TypeError("Memory should be given as a `None`, int, float, or string.")
+
+        # APPROXIMATE memory used so far
+        # NOTE: it's not too easy to guess the amount of memory used by a Python object, so we guess
+        # it here.
+        used_memory = (
+            sys.getsizeof(self.ham)
+            + sum(sys.getsizeof(i) for i in self.ham.__dict__)
+            + sys.getsizeof(self.wfn)
+            + sum(sys.getsizeof(i) for i in self.wfn.__dict__)
+        )
+        avail_memory = memory - used_memory
+        num_elements = avail_memory / (
+            self.wfn.params.itemsize
+            + sys.getsizeof(2 ** self.wfn.nspin)
+            + sys.getsizeof(self.wfn.nparams)
+        )
+
+        # no need to cache if not derivatized right?
+        self.wfn.load_cache(
+            maxsize_olp=int(num_elements // 2), maxsize_deriv=int(num_elements // 2)
+        )

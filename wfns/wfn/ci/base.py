@@ -27,8 +27,6 @@ class CIWavefunction(BaseWavefunction):
         Number of spin orbitals (alpha and beta).
     params : np.ndarray
         Parameters of the wavefunction.
-    memory : float
-        Memory available for the wavefunction.
     _spin : float
         Total spin of each Slater determinant.
         :math:`\frac{1}{2}(N_\alpha - N_\beta)`.
@@ -59,15 +57,13 @@ class CIWavefunction(BaseWavefunction):
 
     Methods
     -------
-    __init__(self, nelec, nspin, memory=None, params=None, sd_vec=None, spin=None,
+    __init__(self, nelec, nspin, params=None, sd_vec=None, spin=None,
              seniority=None):
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_memory(self, memory=None):
-        Assign memory available for the wavefunction.
     assign_params(self, params)
         Assign parameters of the wavefunction.
     load_cache(self)
@@ -86,9 +82,7 @@ class CIWavefunction(BaseWavefunction):
     """
 
     # pylint:disable=W0223
-    def __init__(
-        self, nelec, nspin, memory=None, params=None, sd_vec=None, spin=None, seniority=None
-    ):
+    def __init__(self, nelec, nspin, params=None, sd_vec=None, spin=None, seniority=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -97,9 +91,6 @@ class CIWavefunction(BaseWavefunction):
             Number of electrons.
         nspin : int
             Number of spin orbitals.
-        memory : {float, int, str, None}
-            Memory available for the wavefunction.
-            Default does not limit memory usage (i.e. infinite).
         params : np.ndarray
             Coefficients of the Slater determinants of a CI wavefunction.
         sd_vec : iterable of int
@@ -115,7 +106,7 @@ class CIWavefunction(BaseWavefunction):
             Default is no seniority (all seniority possible).
 
         """
-        super().__init__(nelec, nspin, memory=memory)
+        super().__init__(nelec, nspin)
         self.assign_spin(spin=spin)
         self.assign_seniority(seniority=seniority)
         self.assign_sd_vec(sd_vec=sd_vec)

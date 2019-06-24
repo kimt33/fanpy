@@ -164,7 +164,6 @@ def test_jacobi_assign_orbtype():
     test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 10
-    test.memory = 10
 
     test.assign_orbtype(None)
     assert test.orbtype == "restricted"
@@ -184,7 +183,6 @@ def test_jacobi_assign_jacobi_indices():
     test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 10
-    test.memory = 10
 
     # not tuple or list
     with pytest.raises(TypeError):
@@ -241,10 +239,9 @@ def test_jacobi_get_overlap():
     test = skip_init(JacobiWavefunction)
     test.nelec = 2
     test.nspin = 4
-    test.memory = 10
     test._cache_fns = {}
     test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
-    test.assign_wfn(CIWavefunction(2, 4, memory=10))
+    test.assign_wfn(CIWavefunction(2, 4))
     test.wfn.params = np.arange(1, 7)
     wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
     test.load_cache()
@@ -386,9 +383,8 @@ def test_jacobi_get_overlap_restricted():
     test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 8
-    test.memory = 10
     test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
-    test.assign_wfn(CIWavefunction(4, 8, memory=10))
+    test.assign_wfn(CIWavefunction(4, 8))
     test._cache_fns = {}
     test.wfn.params = np.arange(1, test.wfn.nparams + 1)
     wfn_sd_coeff = {sd: test.wfn.params[index] for sd, index in test.wfn.dict_sd_index.items()}
@@ -513,9 +509,8 @@ def test_jacobi_get_overlap_der():
     test = skip_init(JacobiWavefunction)
     test.nelec = 2
     test.nspin = 4
-    test.memory = 10
     test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
-    test.assign_wfn(CIWavefunction(2, 4, memory=10))
+    test.assign_wfn(CIWavefunction(2, 4))
     test._cache_fns = {}
     test.wfn.params = np.arange(1, 7)
     wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
@@ -659,9 +654,8 @@ def test_jacobi_get_overlap_restricted_der():
     test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 8
-    test.memory = 10
     test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
-    test.assign_wfn(CIWavefunction(4, 8, memory=10))
+    test.assign_wfn(CIWavefunction(4, 8))
     test._cache_fns = {}
     test.wfn.params = np.arange(1, test.wfn.nparams + 1)
     wfn_sd_coeff = {sd: test.wfn.params[index] for sd, index in test.wfn.dict_sd_index.items()}
@@ -806,10 +800,8 @@ def test_jacobi_compare_nonorth():
     )
 
     # one rotation
-    jacobi = JacobiWavefunction(
-        nelec, nspin, doci, memory=doci.memory, orbtype="restricted", jacobi_indices=(0, 1)
-    )
-    nonorth = NonorthWavefunction(nelec, nspin, doci, memory=doci.memory)
+    jacobi = JacobiWavefunction(nelec, nspin, doci, orbtype="restricted", jacobi_indices=(0, 1))
+    nonorth = NonorthWavefunction(nelec, nspin, doci)
 
     sds = sd_list(4, 4, num_limit=None, exc_orders=None)
 
@@ -833,27 +825,17 @@ def test_jacobi_compare_nonorth():
             assert np.isclose(nonorth.get_overlap(sd), jacobi.get_overlap(sd))
 
     # two rotations
-    nonorth = NonorthWavefunction(nelec, nspin, memory=doci.memory, wfn=doci)
+    nonorth = NonorthWavefunction(nelec, nspin, wfn=doci)
     for sd in sds:
         for theta_one in np.linspace(-np.pi, np.pi, 10):
             jacobi_one = JacobiWavefunction(
-                nelec,
-                nspin,
-                memory=doci.memory,
-                wfn=doci,
-                orbtype="restricted",
-                jacobi_indices=(0, 1),
+                nelec, nspin, wfn=doci, orbtype="restricted", jacobi_indices=(0, 1)
             )
             jacobi_one.assign_params(np.array(theta_one))
             jacobi_one.clear_cache()
             for theta_two in np.linspace(-np.pi, np.pi, 10):
                 jacobi_two = JacobiWavefunction(
-                    nelec,
-                    nspin,
-                    memory=doci.memory,
-                    wfn=jacobi_one,
-                    orbtype="restricted",
-                    jacobi_indices=(2, 3),
+                    nelec, nspin, wfn=jacobi_one, orbtype="restricted", jacobi_indices=(2, 3)
                 )
                 jacobi_two.assign_params(np.array(theta_two))
                 jacobi_two.clear_cache()
@@ -897,7 +879,6 @@ def test_jacobi_energy():
         jacobi = JacobiWavefunction(
             nelec,
             nspin,
-            memory=doci.memory,
             wfn=doci,
             orbtype="restricted",
             jacobi_indices=orbpair,
@@ -924,9 +905,7 @@ def test_jacobi_energy():
             wfn = jacobi
         # rotating wavefunction as a NonorthWavefunction
         elif wfn_type == "nonorth":
-            wfn = NonorthWavefunction(
-                nelec, nspin, doci, memory=doci.memory, params=jacobi.jacobi_rotation
-            )
+            wfn = NonorthWavefunction(nelec, nspin, doci, params=jacobi.jacobi_rotation)
         norm = sum(wfn.get_overlap(sd) ** 2 for sd in sds)
         if expectation_type == "ci matrix":
             return (

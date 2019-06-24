@@ -45,8 +45,6 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         Number of spin orbitals (alpha and beta).
     params : np.ndarray
         Parameters of the wavefunction.
-    memory : float
-        Memory available for the wavefunction.
     wfn : BaseWavefunction
         Wavefunction whose orbitals are rotated.
     jacobi_indices : 2-tuple of ints
@@ -78,15 +76,13 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
 
     Methods
     -------
-    __init__(self, nelec, nspin, wfn, memory=None, params=None, orbtype=None,
+    __init__(self, nelec, nspin, wfn, params=None, orbtype=None,
              jacobi_indices=None):
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_memory(self, memory=None):
-        Assign memory available for the wavefunction.
     assign_params(self, params)
         Assign parameters of the wavefunction.
     assign_orbtype(self, orbtype=None)
@@ -102,9 +98,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
 
     """
 
-    def __init__(
-        self, nelec, nspin, wfn, memory=None, params=None, orbtype=None, jacobi_indices=None
-    ):
+    def __init__(self, nelec, nspin, wfn, params=None, orbtype=None, jacobi_indices=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -118,7 +112,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
             Orbitals that will be rotated.
 
         """
-        super().__init__(nelec, nspin, wfn, memory=memory, params=params)
+        super().__init__(nelec, nspin, wfn, params=params)
         self.assign_orbtype(orbtype)
         self.assign_jacobi_indices(jacobi_indices)
 

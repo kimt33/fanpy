@@ -56,12 +56,6 @@ def test_assign_wfns():
     test.nelec = 4
     with pytest.raises(ValueError):
         LinearCombinationWavefunction.assign_wfns(test, (test_wfn, TempWavefunction(5, 10)))
-    test.params = np.random.rand(10)
-    test.memory = np.inf
-    with pytest.raises(ValueError):
-        LinearCombinationWavefunction.assign_wfns(
-            test, (test_wfn, TempWavefunction(4, 10, memory="2gb"))
-        )
     with pytest.raises(ValueError):
         LinearCombinationWavefunction.assign_wfns(test, (test_wfn,))
     # NOTE: wavefunctions with different numbers of spin orbitals are allowed

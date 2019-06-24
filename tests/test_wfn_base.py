@@ -47,25 +47,6 @@ def test_assign_nspin():
     assert test.nspin == 2
 
 
-def test_assign_memory():
-    """Test BaseWavefunction.assign_memory."""
-    test = skip_init(disable_abstract(BaseWavefunction))
-    test.assign_memory(None)
-    assert test.memory == np.inf
-    test.assign_memory(10)
-    assert test.memory == 10
-    test.assign_memory(20.0)
-    assert test.memory == 20
-    test.assign_memory("10mb")
-    assert test.memory == 1e6 * 10
-    test.assign_memory("20.1gb")
-    assert test.memory == 1e9 * 20.1
-    with pytest.raises(TypeError):
-        test.assign_memory([])
-    with pytest.raises(ValueError):
-        test.assign_memory("20.1kb")
-
-
 def test_assign_params():
     """Test BaseWavefunction.assign_params."""
     # default
@@ -160,10 +141,9 @@ def test_assign_params():
 def test_init():
     """Test BaseWavefunction.__init__."""
     test = skip_init(disable_abstract(BaseWavefunction))
-    BaseWavefunction.__init__(test, 2, 10, memory=20)
+    BaseWavefunction.__init__(test, 2, 10)
     assert test.nelec == 2
     assert test.nspin == 10
-    assert test.memory == 20
 
 
 def test_olp():
@@ -187,7 +167,6 @@ def test_load_cache():
             BaseWavefunction, dict_overwrite={"params_shape": property(lambda self: (10, 10))}
         )
     )
-    test.memory = 1000
     test.params = np.array([1, 2, 3])
     test._cache_fns = {}
     test.load_cache()
@@ -197,7 +176,6 @@ def test_load_cache():
     with pytest.raises(NotImplementedError):
         test._cache_fns["overlap derivative"](0, 1)
 
-    test.memory = np.inf
     test.load_cache()
     assert test._cache_fns["overlap"].cache_info().maxsize is None
 

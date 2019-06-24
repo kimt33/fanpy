@@ -17,8 +17,6 @@ class KerasNetwork(BaseWavefunction):
         Number of spin orbitals (alpha and beta).
     params : np.ndarray
         Parameters of the wavefunction.
-    memory : float
-        Memory available for the wavefunction.
 
     Properties
     ----------
@@ -39,14 +37,12 @@ class KerasNetwork(BaseWavefunction):
 
     Methods
     -------
-    __init__(self, nelec, nspin, memory=None)
+    __init__(self, nelec, nspin)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_memory(self, memory=None)
-        Assign memory available for the wavefunction.
     assign_params(self, params)
         Assign parameters of the wavefunction.
     load_cache(self)
@@ -59,7 +55,7 @@ class KerasNetwork(BaseWavefunction):
     """
 
     # pylint: disable=W0223
-    def __init__(self, nelec, nspin, model=None, params=None, memory=None):
+    def __init__(self, nelec, nspin, model=None, params=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -71,12 +67,9 @@ class KerasNetwork(BaseWavefunction):
         mode : {keras.Model, None}
             Model instance from keras.
             Default is 2 layers.
-        memory : {float, int, str, None}
-            Memory available for the wavefunction.
-            Default does not limit memory usage (i.e. infinite).
 
         """
-        super().__init__(nelec, nspin, memory=memory)
+        super().__init__(nelec, nspin)
         self.assign_model(model=model)
         self._template_params = None
         self.assign_params(params=params)

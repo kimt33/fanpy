@@ -14,8 +14,6 @@ class LinearCombinationWavefunction(BaseWavefunction):
         Number of spin orbitals (alpha and beta).
     params : np.ndarray
         Parameters of the wavefunction.
-    memory : float
-        Memory available for the wavefunction.
     wfns : tuple of BaseWavefunction
         Wavefunctions that will be linearly combined.
 
@@ -38,14 +36,12 @@ class LinearCombinationWavefunction(BaseWavefunction):
 
     Methods
     -------
-    __init__(self, nelec, nspin, wfns, memory=None, params=None)
+    __init__(self, nelec, nspin, wfns, params=None)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_memory(self, memory=None):
-        Assign memory available for the wavefunction.
     assign_params(self, params)
         Assign parameters of the wavefunction.
     load_cache(self)
@@ -60,7 +56,7 @@ class LinearCombinationWavefunction(BaseWavefunction):
     """
 
     # pylint: disable=W0223
-    def __init__(self, nelec, nspin, wfns, memory=None, params=None):
+    def __init__(self, nelec, nspin, wfns, params=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -71,12 +67,9 @@ class LinearCombinationWavefunction(BaseWavefunction):
             Number of spin orbitals.
         wfns : tuple of BaseWavefunction
             Wavefunctions that will be linearly combined.
-        memory : {float, int, str, None}
-            Memory available for the wavefunction.
-            Default does not limit memory usage (i.e. infinite).
 
         """
-        super().__init__(nelec, nspin, memory=memory)
+        super().__init__(nelec, nspin)
         self.assign_wfns(wfns)
         self.assign_params(params=params)
 
@@ -166,7 +159,6 @@ class LinearCombinationWavefunction(BaseWavefunction):
         ValueError
             If the given wavefunction does not have the same number of electrons as the initialized
             value.
-            If the given wavefunction does not have the same memory as the initialized value.
             If only one wavefunction is given.
 
         """
@@ -176,11 +168,6 @@ class LinearCombinationWavefunction(BaseWavefunction):
             raise ValueError(
                 "Given wavefunction does not have the same number of electrons as the"
                 " the instantiated NonorthWavefunction."
-            )
-        if any(wfn.memory != self.memory for wfn in wfns):
-            raise ValueError(
-                "Given wavefunction does not have the same memory as the "
-                "instantiated NonorthWavefunction."
             )
         if len(wfns) == 1:
             raise ValueError("Only one wavefunction is given.")

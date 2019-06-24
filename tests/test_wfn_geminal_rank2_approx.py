@@ -376,7 +376,6 @@ def test_rank2_geminal_get_overlap():
     test = RankTwoGeminal()
     test.assign_nspin(8)
     test.assign_nelec(4)
-    test.assign_memory()
     test.assign_ngem(2)
     test.assign_orbpairs([(0, 4), (1, 5), (2, 6), (3, 7)])
     test.assign_params(np.arange(1, 11, dtype=float))

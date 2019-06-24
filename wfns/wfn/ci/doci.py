@@ -17,8 +17,6 @@ class DOCI(CIWavefunction):
         Number of spin orbitals (alpha and beta).
     params : np.ndarray
         Parameters of the wavefunction.
-    memory : float
-        Memory available for the wavefunction.
     _spin : float
         Total spin of each Slater determinant.
         :math:`\frac{1}{2}(N_\alpha - N_\beta)`.
@@ -49,15 +47,12 @@ class DOCI(CIWavefunction):
 
     Methods
     -------
-    __init__(self, nelec, nspin, memory=None, params=None, sd_vec=None, spin=None,
-             seniority=None):
+    __init__(self, nelec, nspin, params=None, sd_vec=None, spin=None, seniority=None):
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_memory(self, memory=None):
-        Assign memory available for the wavefunction.
     assign_params(self, params)
         Assign parameters of the wavefunction.
     load_cache(self)

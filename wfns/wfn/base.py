@@ -17,8 +17,6 @@ class BaseWavefunction(ParamContainer):
         Number of spin orbitals (alpha and beta).
     params : np.ndarray
         Parameters of the wavefunction.
-    memory : float
-        Memory available for the wavefunction.
 
     Properties
     ----------
@@ -37,14 +35,12 @@ class BaseWavefunction(ParamContainer):
 
     Methods
     -------
-    __init__(self, nelec, nspin, memory=None)
+    __init__(self, nelec, nspin)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_memory(self, memory=None)
-        Assign memory available for the wavefunction.
     assign_params(self, params)
         Assign parameters of the wavefunction.
     load_cache(self)
@@ -64,7 +60,7 @@ class BaseWavefunction(ParamContainer):
 
     """
 
-    def __init__(self, nelec, nspin, memory=None):
+    def __init__(self, nelec, nspin):
         """Initialize the wavefunction.
 
         Parameters
@@ -73,15 +69,11 @@ class BaseWavefunction(ParamContainer):
             Number of electrons.
         nspin : int
             Number of spin orbitals.
-        memory : {float, int, str, None}
-            Memory available for the wavefunction.
-            Default does not limit memory usage (i.e. infinite).
 
         """
         # pylint: disable=W0231
         self.assign_nelec(nelec)
         self.assign_nspin(nspin)
-        self.assign_memory(memory)
         # assign_params not included because it depends on template_params, which may involve
         # more attributes than is given above
 
@@ -207,37 +199,6 @@ class BaseWavefunction(ParamContainer):
             raise NotImplementedError("Odd number of spin orbitals is not supported.")
         self.nspin = nspin
 
-    def assign_memory(self, memory=None):
-        """Assign memory available for the wavefunction.
-
-        Parameters
-        ----------
-        memory : {int, str, None}
-            Memory available for the wavefunction.
-
-        Raises
-        ------
-        ValueError
-            If memory is given as a string and does not end with "mb" or "gb".
-        TypeError
-            If memory is not given as a None, int, float, or string.
-
-        """
-        if memory is None:
-            memory = np.inf
-        elif isinstance(memory, (int, float)):
-            memory = float(memory)
-        elif isinstance(memory, str):
-            if "mb" in memory.lower():
-                memory = 1e6 * float(memory.rstrip("mb ."))
-            elif "gb" in memory.lower():
-                memory = 1e9 * float(memory.rstrip("gb ."))
-            else:
-                raise ValueError('Memory given as a string should end with either "mb" or "gb".')
-        else:
-            raise TypeError("Memory should be given as a `None`, int, float, or string.")
-        self.memory = memory
-
     def assign_params(self, params=None, add_noise=False):
         """Assign the parameters of the wavefunction.
 
@@ -296,7 +257,7 @@ class BaseWavefunction(ParamContainer):
                     0.01j * scale * (np.random.rand(*self.params_shape).astype(complex) - 0.5)
                 )
 
-    def load_cache(self):
+    def load_cache(self, maxsize_olp=None, maxsize_deriv=None):
         """Load the functions whose values will be cached.
 
         To minimize the cache size, the input is made as small as possible. Therefore, the cached
@@ -315,31 +276,33 @@ class BaseWavefunction(ParamContainer):
         the given Slater determinant will never need to be evaluated because these conditions are
         caught before calling the cached functions.
 
-        Notes
-        -----
-        Needs to access `memory` and `params`.
+        Parameters
+        ----------
+        maxsize_olp : int
+            Number of results that will be cached for the `_olp` function.
+            Performs best when factor of 2.
+            Default (value of `None`) results in unbounded cache.
+        maxsize_deriv : int
+            Number of results that will be cached for the `_olp_deriv` function.
+            Performs best when factor of 2.
+            Default (value of `None`) results in unbounded cache.
 
         """
         # pylint: disable=C0103
-        # assign memory allocated to cache
-        if self.memory == np.inf:
-            memory = None
-        else:
-            memory = int((self.memory - 5 * 8 * self.nparams) / (self.nparams + 1))
 
         # create function that will be cached
-        @functools.lru_cache(maxsize=memory, typed=False)
+        @functools.lru_cache(maxsize=maxsize_olp, typed=False)
         def _olp(sd):
             """Return cached overlap."""
             return self._olp(sd)
 
-        @functools.lru_cache(maxsize=memory, typed=False)
+        @functools.lru_cache(maxsize=maxsize_deriv, typed=False)
         def _olp_deriv(sd, deriv):
             """Return cached derivative of the overlap."""
             return self._olp_deriv(sd, deriv)
 
-        # store the cached function
         self._cache_fns = {}
+        # store the cached function
         self._cache_fns["overlap"] = _olp
         self._cache_fns["overlap derivative"] = _olp_deriv
 
@@ -471,7 +434,6 @@ class BaseWavefunction(ParamContainer):
         -------
         overlap : float
             Overlap of the wavefunction.
-
         Raises
         ------
         TypeError

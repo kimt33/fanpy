@@ -40,8 +40,6 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         Number of electrons.
     nspin : int
         Number of spin orbitals (alpha and beta).
-    memory : float
-        Memory available for the wavefunction.
     params : tuple of np.ndarray
         Orbital transformation matrices.
         If one transformation matrix is given, then the transformation coresponds to those of
@@ -75,15 +73,13 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
 
     Methods
     -------
-    __init__(self, nelec, nspin, wfn, memory=None, params=None, orbtype=None,
+    __init__(self, nelec, nspin, wfn, params=None, orbtype=None,
              jacobi_indices=None):
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_memory(self, memory=None):
-        Assign memory available for the wavefunction.
     assign_params(self, params)
         Assign the orbital transformation matrix.
     load_cache(self)

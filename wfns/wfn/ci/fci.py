@@ -55,15 +55,13 @@ class FCI(CIWavefunction):
 
     Methods
     -------
-    __init__(self, nelec, nspin, memory=None, params=None, sd_vec=None, spin=None,
+    __init__(self, nelec, nspin, params=None, sd_vec=None, spin=None,
              seniority=None):
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_memory(self, memory=None):
-        Assign memory available for the wavefunction.
     assign_params(self, params)
         Assign parameters of the wavefunction.
     load_cache(self)
