@@ -48,8 +48,6 @@ class BaseGeminal(BaseWavefunction):
         Number of electrons.
     nspin : int
         Number of spin orbitals (alpha and beta).
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction.
     params : np.ndarray
         Parameters of the wavefunction.
     memory : float
@@ -82,14 +80,12 @@ class BaseGeminal(BaseWavefunction):
 
     Methods
     -------
-    __init__(self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, params=None)
+    __init__(self, nelec, nspin, memory=None, ngem=None, orbpairs=None, params=None)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_dtype(self, dtype)
-        Assign the data type of the parameters.
     assign_memory(self, memory=None)
         Assign memory available for the wavefunction.
     assign_ngem(self, ngem=None)
@@ -118,9 +114,7 @@ class BaseGeminal(BaseWavefunction):
 
     """
 
-    def __init__(
-        self, nelec, nspin, dtype=None, memory=None, ngem=None, orbpairs=None, params=None
-    ):
+    def __init__(self, nelec, nspin, memory=None, ngem=None, orbpairs=None, params=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -129,9 +123,6 @@ class BaseGeminal(BaseWavefunction):
             Number of electrons.
         nspin : int
             Number of spin orbitals.
-        dtype : {float, complex, np.float64, np.complex128, None}
-            Numpy data type.
-            Default is `np.float64`.
         memory : {float, int, str, None}
             Memory available for the wavefunction.
             Default does not limit memory usage (i.e. infinite).
@@ -143,7 +134,7 @@ class BaseGeminal(BaseWavefunction):
             Geminal coefficient matrix.
 
         """
-        super().__init__(nelec, nspin, dtype=dtype)
+        super().__init__(nelec, nspin)
         self.assign_ngem(ngem=ngem)
         self.assign_orbpairs(orbpairs=orbpairs)
         self.assign_params(params=params)
@@ -199,10 +190,10 @@ class BaseGeminal(BaseWavefunction):
 
         Notes
         -----
-        Need `nelec`, `norbpair` (i.e. `dict_ind_orbpair`), and `dtype`
+        Need `nelec` and `norbpair` (i.e. `dict_ind_orbpair`)
 
         """
-        params = np.zeros(self.params_shape, dtype=self.dtype)
+        params = np.zeros(self.params_shape)
         for i in range(self.ngem):
             col_ind = self.get_col_ind((i, i + self.nspatial))
             params[i, col_ind] += 1
@@ -334,7 +325,7 @@ class BaseGeminal(BaseWavefunction):
 
         Notes
         -----
-        Depends on dtype, template_params, and nparams.
+        Depends on template_params, and nparams.
 
         """
         if isinstance(params, BaseGeminal):
@@ -351,7 +342,7 @@ class BaseGeminal(BaseWavefunction):
                 raise ValueError(
                     "The number of geminals in the two wavefunctions must be the " "same."
                 )
-            params = np.zeros(self.params_shape, dtype=self.dtype)
+            params = np.zeros(self.params_shape)
             for ind, orbpair in other.dict_ind_orbpair.items():
                 try:
                     params[:, self.get_col_ind(orbpair)] = other.params[:, ind]

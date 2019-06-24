@@ -83,7 +83,7 @@ class RankTwoApprox:
         # copied from BaseGeminal.template_params
         # super().template_params is not called b/c BaseGeminal.template_params calls
         # self.params_shape, which comes from RankTwoApprox
-        template = np.zeros(super().params_shape, dtype=self.dtype)
+        template = np.zeros(super().params_shape)
         for i in range(self.ngem):
             col_ind = self.get_col_ind((i, i + self.nspatial))
             template[i, col_ind] += 1

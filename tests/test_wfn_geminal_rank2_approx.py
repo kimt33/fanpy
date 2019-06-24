@@ -113,7 +113,6 @@ def test_rank2_geminal_template_params():
     np.random.seed(424242)
 
     test = RankTwoGeminal()
-    test.assign_dtype(float)
     test.assign_nspin(10)
     test.assign_orbpairs()
     test.assign_nelec(2)
@@ -152,7 +151,6 @@ def test_rank2_geminal_template_params():
 def test_rank2_geminal_assign_params():
     """Test RankTwoGeminal.assign_params."""
     test = RankTwoGeminal()
-    test.assign_dtype(float)
     test.assign_nspin(8)
     test.assign_nelec(4)
     test.assign_ngem(2)
@@ -192,7 +190,6 @@ def test_rank2_geminal_assign_params():
 def test_rank2_geminal_lambdas():
     """Test RankTwoGeminal.lambdas."""
     test = RankTwoGeminal()
-    test.assign_dtype(float)
     test.assign_nspin(8)
     test.assign_nelec(4)
     test.assign_ngem(2)
@@ -204,7 +201,6 @@ def test_rank2_geminal_lambdas():
 def test_rank2_geminal_epsilons():
     """Test RankTwoGeminal.epsilons."""
     test = RankTwoGeminal()
-    test.assign_dtype(float)
     test.assign_nspin(8)
     test.assign_nelec(4)
     test.assign_ngem(2)
@@ -216,7 +212,6 @@ def test_rank2_geminal_epsilons():
 def test_rank2_geminal_zetas():
     """Test RankTwoGeminal.zetas."""
     test = RankTwoGeminal()
-    test.assign_dtype(float)
     test.assign_nspin(8)
     test.assign_nelec(4)
     test.assign_ngem(2)
@@ -228,7 +223,6 @@ def test_rank2_geminal_zetas():
 def test_rank2_geminal_fullrank_params():
     """Test RankTwoGeminal.fullrank_params."""
     test = RankTwoGeminal()
-    test.assign_dtype(float)
     test.assign_nspin(8)
     test.assign_nelec(4)
     test.assign_ngem(2)
@@ -242,7 +236,6 @@ def test_rank2_geminal_fullrank_params():
 def test_rank2_geminal_compute_permanent():
     """Test RankTwoGeminal.compute_permanent."""
     test = RankTwoGeminal()
-    test.assign_dtype(float)
     test.assign_nspin(8)
     test.assign_orbpairs([(0, 4), (1, 5), (2, 6), (3, 7)])
     # two electrons
@@ -381,7 +374,6 @@ def test_rank2_geminal_compute_permanent():
 def test_rank2_geminal_get_overlap():
     """Test RankTwoGeminal.get_overlap."""
     test = RankTwoGeminal()
-    test.assign_dtype(float)
     test.assign_nspin(8)
     test.assign_nelec(4)
     test.assign_memory()

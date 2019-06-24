@@ -47,30 +47,6 @@ def test_nspin():
     assert test.nspin == 2
 
 
-def test_assign_dtype():
-    """Test BaseWavefunction.assign_dtype."""
-    test = skip_init(disable_abstract(BaseWavefunction))
-    # check errors
-    with pytest.raises(TypeError):
-        test.assign_dtype("")
-    with pytest.raises(TypeError):
-        test.assign_dtype("float64")
-    with pytest.raises(TypeError):
-        test.assign_dtype(int)
-    with pytest.raises(TypeError):
-        test.assign_dtype(np.float32)
-    # None assigned
-    test.assign_dtype(None)
-    assert test.dtype == np.float64
-    # other assignments
-    for dtype in [float, np.float64]:
-        test.assign_dtype(dtype)
-        assert test.dtype == np.float64
-    for dtype in [complex, np.complex128]:
-        test.assign_dtype(dtype)
-        assert test.dtype == np.complex128
-
-
 def test_assign_memory():
     """Test BaseWavefunction.assign_memory."""
     test = skip_init(disable_abstract(BaseWavefunction))
@@ -102,10 +78,8 @@ def test_assign_params():
             },
         )
     )
-    test.assign_dtype(float)
     test.assign_params()
     assert np.allclose(test.params, np.identity(10))
-    assert test.dtype == test.params.dtype
 
     test = skip_init(
         disable_abstract(
@@ -116,10 +90,8 @@ def test_assign_params():
             },
         )
     )
-    test.assign_dtype(complex)
     test.assign_params()
     assert np.allclose(test.params, np.identity(10))
-    assert test.dtype == test.params.dtype
 
     # check errors
     test = skip_init(
@@ -131,7 +103,6 @@ def test_assign_params():
             },
         )
     )
-    test.assign_dtype(float)
     with pytest.raises(ValueError):
         test.assign_params(2)
     with pytest.raises(TypeError):
@@ -140,8 +111,6 @@ def test_assign_params():
         test.assign_params(np.random.rand(10, 11))
     with pytest.raises(TypeError):
         test.assign_params(np.arange(100, dtype=int).reshape(10, 10))
-    with pytest.raises(TypeError):
-        test.assign_params(np.arange(100, dtype=complex).reshape(10, 10))
     with pytest.raises(ValueError):
         test.assign_params(np.arange(100, dtype=float).reshape(2, 5, 2, 5))
 
@@ -155,7 +124,6 @@ def test_assign_params():
             },
         )
     )
-    test.assign_dtype(float)
     test.assign_params(add_noise=True)
     assert np.all(np.abs(test.params - np.identity(10)) <= 0.2 / 100)
     assert not np.allclose(test.params, np.identity(10))
@@ -169,8 +137,7 @@ def test_assign_params():
             },
         )
     )
-    test.assign_dtype(complex)
-    test.assign_params(add_noise=True)
+    test.assign_params(test.template_params.astype(complex), add_noise=True)
     assert np.all(np.abs(np.real(test.params - np.identity(10))) <= 0.1 / 100)
     assert np.all(np.abs(np.imag(test.params - np.identity(10))) <= 0.01 * 0.1 / 100)
     assert not np.allclose(np.real(test.params), np.identity(10))
@@ -186,18 +153,16 @@ def test_assign_params():
             },
         )
     )
-    test.assign_dtype(complex)
-    test.assign_params(2.0)
+    test.assign_params(complex(2.0))
     assert test.params.shape == (1, 1, 1)
 
 
 def test_init():
     """Test BaseWavefunction.__init__."""
     test = skip_init(disable_abstract(BaseWavefunction))
-    BaseWavefunction.__init__(test, 2, 10, dtype=float, memory=20)
+    BaseWavefunction.__init__(test, 2, 10, memory=20)
     assert test.nelec == 2
     assert test.nspin == 10
-    assert test.dtype == np.float64
     assert test.memory == 20
 
 
@@ -301,3 +266,12 @@ def test_seniority():
     """Test BaseWavefunction.seniority."""
     test = skip_init(disable_abstract(BaseWavefunction))
     assert test.seniority is None
+
+
+def test_dtype():
+    """Test BaseWavefunction.dtype."""
+    test = skip_init(disable_abstract(BaseWavefunction))
+    test.params = np.arange(10, dtype=float)
+    assert test.dtype == float
+    test.params = np.arange(10, dtype=complex)
+    assert test.dtype == complex

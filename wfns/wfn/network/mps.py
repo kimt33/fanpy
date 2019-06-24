@@ -15,8 +15,6 @@ class MatrixProductState(BaseWavefunction):
         Number of electrons.
     nspin : int
         Number of spin orbitals (alpha and beta).
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction.
     params : np.ndarray
         Parameters of the wavefunction.
     memory : float
@@ -34,19 +32,19 @@ class MatrixProductState(BaseWavefunction):
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
+    dtype : {np.float64, np.complex128}
+        Data type of the wavefunction.
     template_params : np.ndarray
         Default parameters of the wavefunction.
 
     Methods
     -------
-    __init__(self, nelec, nspin, dtype=None, memory=None)
+    __init__(self, nelec, nspin, memory=None)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_dtype(self, dtype)
-        Assign the data type of the parameters.
     assign_memory(self, memory=None)
         Assign memory available for the wavefunction.
     assign_params(self, params)
@@ -72,7 +70,7 @@ class MatrixProductState(BaseWavefunction):
 
     """
 
-    def __init__(self, nelec, nspin, dtype=None, memory=None, params=None, dimension=None):
+    def __init__(self, nelec, nspin, memory=None, params=None, dimension=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -81,15 +79,12 @@ class MatrixProductState(BaseWavefunction):
             Number of electrons.
         nspin : int
             Number of spin orbitals.
-        dtype : {float, complex, np.float64, np.complex128, None}
-            Numpy data type.
-            Default is `np.float64`.
         memory : {float, int, str, None}
             Memory available for the wavefunction.
             Default does not limit memory usage (i.e. infinite).
 
         """
-        super().__init__(nelec, nspin, dtype=dtype, memory=memory)
+        super().__init__(nelec, nspin, memory=memory)
         self.assign_dimension(dimension)
         self.assign_params(params)
         self._cache_fns = {}
@@ -309,11 +304,9 @@ class MatrixProductState(BaseWavefunction):
         # NOTE: assumes that matrix of index 1 has the same shape as the subsequent ones (except
         #       last one)
         #       assumes that there are K matrices
-        matrices = [np.zeros(self.get_matrix_shape(0), dtype=self.dtype)]
-        matrices += [
-            np.zeros(self.get_matrix_shape(1), dtype=self.dtype) for i in range(self.nspatial - 2)
-        ]
-        matrices += [np.zeros(self.get_matrix_shape(self.nspatial - 1), dtype=self.dtype)]
+        matrices = [np.zeros(self.get_matrix_shape(0))]
+        matrices += [np.zeros(self.get_matrix_shape(1)) for i in range(self.nspatial - 2)]
+        matrices += [np.zeros(self.get_matrix_shape(self.nspatial - 1))]
 
         ground_sd = slater.ground(self.nelec, self.nspin)
         occ_indices = self.get_occupation_indices(ground_sd)
@@ -360,7 +353,7 @@ class MatrixProductState(BaseWavefunction):
 
         Notes
         -----
-        Depends on dtype, template_params, and nparams.
+        Depends on template_params, and nparams.
 
         """
         # FIXME: move this part to the base wavefunction

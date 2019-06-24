@@ -15,8 +15,6 @@ class KerasNetwork(BaseWavefunction):
         Number of electrons.
     nspin : int
         Number of spin orbitals (alpha and beta).
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction.
     params : np.ndarray
         Parameters of the wavefunction.
     memory : float
@@ -34,19 +32,19 @@ class KerasNetwork(BaseWavefunction):
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
+    dtype : {np.float64, np.complex128}
+        Data type of the wavefunction.
     template_params : np.ndarray
         Default parameters of the wavefunction.
 
     Methods
     -------
-    __init__(self, nelec, nspin, dtype=None, memory=None)
+    __init__(self, nelec, nspin, memory=None)
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_dtype(self, dtype)
-        Assign the data type of the parameters.
     assign_memory(self, memory=None)
         Assign memory available for the wavefunction.
     assign_params(self, params)
@@ -61,7 +59,7 @@ class KerasNetwork(BaseWavefunction):
     """
 
     # pylint: disable=W0223
-    def __init__(self, nelec, nspin, model=None, params=None, dtype=None, memory=None):
+    def __init__(self, nelec, nspin, model=None, params=None, memory=None):
         """Initialize the wavefunction.
 
         Parameters
@@ -73,40 +71,15 @@ class KerasNetwork(BaseWavefunction):
         mode : {keras.Model, None}
             Model instance from keras.
             Default is 2 layers.
-        dtype : {float, complex, np.float64, np.complex128, None}
-            Numpy data type.
-            Default is `np.float64`.
         memory : {float, int, str, None}
             Memory available for the wavefunction.
             Default does not limit memory usage (i.e. infinite).
 
         """
-        super().__init__(nelec, nspin, dtype=dtype, memory=memory)
+        super().__init__(nelec, nspin, memory=memory)
         self.assign_model(model=model)
         self._template_params = None
         self.assign_params(params=params)
-
-    def assign_dtype(self, dtype=None):
-        """Assign the data type of the parameters.
-
-        Parameters
-        ----------
-        dtype : {float, complex, np.float64, np.complex128}
-            Numpy data type.
-            If None then set to np.float64.
-
-        Raises
-        ------
-        TypeError
-            If dtype is not one of float, complex, np.float64, np.complex128.
-        ValueError
-            If dtype is not np.float64.
-
-        """
-        super().assign_dtype(dtype)
-        if self.dtype != np.float64:
-            raise ValueError("Given data type must be a np.float64.")
-        keras.backend.common._FLOATX = "float64"  # pylint: disable=W0212
 
     def assign_model(self, model=None):
         """Assign the Keras model used to represent the neural network.
@@ -298,13 +271,14 @@ class KerasNetwork(BaseWavefunction):
             If `params` is not a numpy array.
             If `params` does not have data type of `float`, `complex`, `np.float64` and
             `np.complex128`.
-            If `params` has complex data type and wavefunction has float data type.
+            If dtype is not one of float, complex, np.float64, np.complex128.
         ValueError
             If `params` does not have the same shape as the template_params.
+            If dtype is not np.float64.
 
         Notes
         -----
-        Depends on dtype, template_params, and nparams.
+        Depends on template_params, and nparams.
 
         """
         if params is None:
@@ -314,6 +288,10 @@ class KerasNetwork(BaseWavefunction):
 
         # store parameters
         super().assign_params(params=params, add_noise=add_noise)
+
+        if params.dtype != np.float64:
+            raise ValueError("Given data type must be a np.float64.")
+        keras.backend.common._FLOATX = "float64"  # pylint: disable=W0212
 
         # divide parameters into a list of two dimensional numpy arrays
         weights = []

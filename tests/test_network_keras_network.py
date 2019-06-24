@@ -8,15 +8,6 @@ import wfns.backend.slater as slater
 from wfns.wfn.network.keras_network import KerasNetwork
 
 
-def test_keras_assign_dtype():
-    """Test KerasNetwork.assign_dtype."""
-    test = skip_init(KerasNetwork)
-    test.assign_dtype(float)
-    assert test.dtype == np.float64
-    with pytest.raises(ValueError):
-        test.assign_dtype(complex)
-
-
 def test_keras_assign_model():
     """Test KerasNetwork.assign_model."""
     test = skip_init(KerasNetwork)
@@ -119,7 +110,6 @@ def test_keras_assign_template_params():
     test = skip_init(KerasNetwork)
     test.nelec = 4
     test.nspin = 10
-    test.dtype = np.float64
     test.assign_model()
     test.assign_template_params()
     assert np.allclose(np.identity(10), test._template_params[:100].reshape(10, 10))
@@ -148,7 +138,6 @@ def test_keras_assign_params():
     """Test KerasNetwork.assign_params."""
     test = skip_init(KerasNetwork)
     test.nspin = 10
-    test.dtype = np.float64
     test.assign_model()
     # default
     test._template_params = np.ones(test.nparams)
@@ -164,6 +153,10 @@ def test_keras_assign_params():
     assert np.allclose(weights[0], answer[:100].reshape(10, 10))
     assert np.allclose(weights[1], answer[100:200].reshape(10, 10))
     assert np.allclose(weights[2], answer[200:].reshape(10, 1))
+
+    answer = np.random.rand(210).astype(complex)
+    with pytest.raises(ValueError):
+        test.assign_params(answer)
 
 
 def test_keras_init():
@@ -195,7 +188,6 @@ def test_keras_get_overlap():
     """Test KerasNetwork.get_overlap."""
     test = skip_init(KerasNetwork)
     test.nspin = 4
-    test.dtype = np.float64
     model = keras.engine.sequential.Sequential()
     model.add(
         keras.layers.core.Dense(4, input_dim=4, activation=keras.activations.relu, use_bias=False)

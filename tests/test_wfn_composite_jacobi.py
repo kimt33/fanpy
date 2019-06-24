@@ -39,6 +39,11 @@ class TempWavefunction(BaseWavefunction):
         return self._seniority
 
     @property
+    def dtype(self):
+        """Return the dtype of the wavefunction."""
+        return float
+
+    @property
     def params_shape(self):
         """Return the shape of the parameters."""
         return (10, 10)
@@ -97,7 +102,6 @@ def test_jacobi_jacobi_rotation():
     """Tests JacobiWavefunction.jacobi_rotation."""
     test = skip_init(JacobiWavefunction)
     theta = 2 * np.pi * (np.random.random() - 0.5)
-    test.dtype = float
     test.params = np.array(theta)
     test.nspin = 6
 
@@ -149,11 +153,9 @@ def test_jacobi_jacobi_rotation():
 def test_jacobi_assign_params():
     """Test JacobiWavefunction.assign_params."""
     test = skip_init(JacobiWavefunction)
-    test.assign_dtype(float)
     test.assign_params(0)
     assert test.params.size == 1
     assert test.params.shape == ()
-    assert test.params.dtype == float
     assert test.params == 0
 
 
@@ -162,7 +164,6 @@ def test_jacobi_assign_orbtype():
     test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 10
-    test.dtype = np.float64
     test.memory = 10
 
     test.assign_orbtype(None)
@@ -183,7 +184,6 @@ def test_jacobi_assign_jacobi_indices():
     test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 10
-    test.dtype = np.float64
     test.memory = 10
 
     # not tuple or list
@@ -241,13 +241,12 @@ def test_jacobi_get_overlap():
     test = skip_init(JacobiWavefunction)
     test.nelec = 2
     test.nspin = 4
-    test.dtype = np.float64
     test.memory = 10
-    test.assign_wfn(CIWavefunction(2, 4, memory=10))
     test._cache_fns = {}
+    test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
+    test.assign_wfn(CIWavefunction(2, 4, memory=10))
     test.wfn.params = np.arange(1, 7)
     wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
-    test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
     test.load_cache()
 
     # generalized
@@ -387,13 +386,12 @@ def test_jacobi_get_overlap_restricted():
     test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 8
-    test.dtype = np.float64
     test.memory = 10
+    test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
     test.assign_wfn(CIWavefunction(4, 8, memory=10))
     test._cache_fns = {}
     test.wfn.params = np.arange(1, test.wfn.nparams + 1)
     wfn_sd_coeff = {sd: test.wfn.params[index] for sd, index in test.wfn.dict_sd_index.items()}
-    test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
     test.load_cache()
 
     sin = np.sin(test.params)
@@ -515,13 +513,12 @@ def test_jacobi_get_overlap_der():
     test = skip_init(JacobiWavefunction)
     test.nelec = 2
     test.nspin = 4
-    test.dtype = np.float64
     test.memory = 10
+    test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
     test.assign_wfn(CIWavefunction(2, 4, memory=10))
     test._cache_fns = {}
     test.wfn.params = np.arange(1, 7)
     wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
-    test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
     test.load_cache()
     sin = np.sin(test.params)
     cos = np.cos(test.params)
@@ -662,13 +659,12 @@ def test_jacobi_get_overlap_restricted_der():
     test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 8
-    test.dtype = np.float64
     test.memory = 10
+    test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
     test.assign_wfn(CIWavefunction(4, 8, memory=10))
     test._cache_fns = {}
     test.wfn.params = np.arange(1, test.wfn.nparams + 1)
     wfn_sd_coeff = {sd: test.wfn.params[index] for sd, index in test.wfn.dict_sd_index.items()}
-    test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
     test.load_cache()
 
     sin = np.sin(test.params)
@@ -811,15 +807,9 @@ def test_jacobi_compare_nonorth():
 
     # one rotation
     jacobi = JacobiWavefunction(
-        nelec,
-        nspin,
-        doci,
-        dtype=doci.dtype,
-        memory=doci.memory,
-        orbtype="restricted",
-        jacobi_indices=(0, 1),
+        nelec, nspin, doci, memory=doci.memory, orbtype="restricted", jacobi_indices=(0, 1)
     )
-    nonorth = NonorthWavefunction(nelec, nspin, doci, dtype=doci.dtype, memory=doci.memory)
+    nonorth = NonorthWavefunction(nelec, nspin, doci, memory=doci.memory)
 
     sds = sd_list(4, 4, num_limit=None, exc_orders=None)
 
@@ -843,13 +833,12 @@ def test_jacobi_compare_nonorth():
             assert np.isclose(nonorth.get_overlap(sd), jacobi.get_overlap(sd))
 
     # two rotations
-    nonorth = NonorthWavefunction(nelec, nspin, dtype=doci.dtype, memory=doci.memory, wfn=doci)
+    nonorth = NonorthWavefunction(nelec, nspin, memory=doci.memory, wfn=doci)
     for sd in sds:
         for theta_one in np.linspace(-np.pi, np.pi, 10):
             jacobi_one = JacobiWavefunction(
                 nelec,
                 nspin,
-                dtype=doci.dtype,
                 memory=doci.memory,
                 wfn=doci,
                 orbtype="restricted",
@@ -861,7 +850,6 @@ def test_jacobi_compare_nonorth():
                 jacobi_two = JacobiWavefunction(
                     nelec,
                     nspin,
-                    dtype=doci.dtype,
                     memory=doci.memory,
                     wfn=jacobi_one,
                     orbtype="restricted",
@@ -909,7 +897,6 @@ def test_jacobi_energy():
         jacobi = JacobiWavefunction(
             nelec,
             nspin,
-            dtype=doci.dtype,
             memory=doci.memory,
             wfn=doci,
             orbtype="restricted",
@@ -938,12 +925,7 @@ def test_jacobi_energy():
         # rotating wavefunction as a NonorthWavefunction
         elif wfn_type == "nonorth":
             wfn = NonorthWavefunction(
-                nelec,
-                nspin,
-                doci,
-                dtype=doci.dtype,
-                memory=doci.memory,
-                params=jacobi.jacobi_rotation,
+                nelec, nspin, doci, memory=doci.memory, params=jacobi.jacobi_rotation
             )
         norm = sum(wfn.get_overlap(sd) ** 2 for sd in sds)
         if expectation_type == "ci matrix":

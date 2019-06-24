@@ -162,7 +162,6 @@ def test_gem_norbpair():
 def test_gem_template_params():
     """Test BaseGeminal.template_params."""
     test = skip_init(disable_abstract(BaseGeminal))
-    test.assign_dtype(float)
     test.assign_nelec(6)
     test.assign_nspin(6)
     test.assign_orbpairs()
@@ -182,7 +181,6 @@ def test_gem_template_params():
 def test_gem_assign_params():
     """Test BaseGeminal.assign_params."""
     test = skip_init(disable_abstract(BaseGeminal))
-    test.assign_dtype(float)
     test.assign_nelec(6)
     test.assign_nspin(6)
     test.assign_orbpairs()
@@ -201,7 +199,6 @@ def test_gem_assign_params():
     )
 
     test2 = skip_init(disable_abstract(BaseGeminal))
-    test2.assign_dtype(float)
     test2.assign_nelec(4)
     with pytest.raises(ValueError):
         test.assign_params(test2)
@@ -290,7 +287,6 @@ def test_gem_get_orbpair():
 def test_gem_compute_permanent():
     """Test BaseGeminal.compute_permanent."""
     test = skip_init(disable_abstract(BaseGeminal))
-    test.assign_dtype(float)
     test.assign_nelec(6)
     test.assign_nspin(6)
     test.assign_orbpairs()
@@ -328,7 +324,6 @@ def test_gem_compute_permanent():
 def test_gem_compute_permanent_deriv():
     """Test derivatives of BaseGeminal.compute_permanent using finite difference."""
     test = skip_init(disable_abstract(BaseGeminal))
-    test.assign_dtype(float)
     test.assign_nelec(6)
     test.assign_nspin(6)
     test.assign_memory(1000)
@@ -373,7 +368,6 @@ def test_gem_get_overlap():
             },
         )
     )
-    test.assign_dtype(float)
     test.assign_nelec(4)
     test.assign_nspin(6)
     test.assign_memory()

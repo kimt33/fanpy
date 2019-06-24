@@ -43,8 +43,6 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         Number of electrons.
     nspin : int
         Number of spin orbitals (alpha and beta).
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction.
     params : np.ndarray
         Parameters of the wavefunction.
     memory : float
@@ -66,6 +64,8 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         Spin of the wavefunction.
     seniority : int
         Seniority of the wavefunction.
+    dtype : {np.float64, np.complex128}
+        Data type of the wavefunction.
     template_params : np.ndarray
         Default parameters of the wavefunction.
     jacobi_rotation : tuple of np.ndarray
@@ -78,15 +78,13 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
 
     Methods
     -------
-    __init__(self, nelec, nspin, wfn, dtype=None, memory=None, params=None, orbtype=None,
+    __init__(self, nelec, nspin, wfn, memory=None, params=None, orbtype=None,
              jacobi_indices=None):
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_dtype(self, dtype)
-        Assign the data type of the parameters.
     assign_memory(self, memory=None):
         Assign memory available for the wavefunction.
     assign_params(self, params)
@@ -105,15 +103,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
     """
 
     def __init__(
-        self,
-        nelec,
-        nspin,
-        wfn,
-        dtype=None,
-        memory=None,
-        params=None,
-        orbtype=None,
-        jacobi_indices=None,
+        self, nelec, nspin, wfn, memory=None, params=None, orbtype=None, jacobi_indices=None
     ):
         """Initialize the wavefunction.
 
@@ -128,7 +118,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
             Orbitals that will be rotated.
 
         """
-        super().__init__(nelec, nspin, wfn, dtype=dtype, memory=memory, params=params)
+        super().__init__(nelec, nspin, wfn, memory=memory, params=params)
         self.assign_orbtype(orbtype)
         self.assign_jacobi_indices(jacobi_indices)
 

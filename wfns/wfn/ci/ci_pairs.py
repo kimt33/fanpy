@@ -17,8 +17,6 @@ class CIPairs(DOCI):
         Number of electrons.
     nspin : int
         Number of spin orbitals (alpha and beta).
-    dtype : {np.float64, np.complex128}
-        Data type of the wavefunction.
     params : np.ndarray
         Parameters of the wavefunction.
     memory : float
@@ -48,18 +46,18 @@ class CIPairs(DOCI):
         Seniority of the wavefunction
     template_params : np.ndarray
         Default parameters of the CI wavefunction.
+    dtype : {np.float64, np.complex128}
+        Data type of the wavefunction.
 
     Methods
     -------
-    __init__(self, nelec, nspin, dtype=None, memory=None, params=None, sd_vec=None, spin=None,
+    __init__(self, nelec, nspin, memory=None, params=None, sd_vec=None, spin=None,
              seniority=None):
         Initialize the wavefunction.
     assign_nelec(self, nelec)
         Assign the number of electrons.
     assign_nspin(self, nspin)
         Assign the number of spin orbitals.
-    assign_dtype(self, dtype)
-        Assign the data type of the parameters.
     assign_memory(self, memory=None):
         Assign memory available for the wavefunction.
     assign_params(self, params)
@@ -133,13 +131,7 @@ class CIPairs(DOCI):
 
         # create AP1roG
         ap1rog = AP1roG(
-            self.nelec,
-            self.nspin,
-            dtype=self.dtype,
-            ngem=None,
-            orbpairs=None,
-            ref_sd=ref_sd,
-            params=None,
+            self.nelec, self.nspin, ngem=None, orbpairs=None, ref_sd=ref_sd, params=None
         )
         # fill empty geminal coefficient
         gem_coeffs = np.zeros(ap1rog.params.shape, dtype=self.dtype)

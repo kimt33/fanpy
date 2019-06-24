@@ -29,6 +29,11 @@ class TempWavefunction(BaseWavefunction):
         return self._seniority
 
     @property
+    def dtype(self):
+        """Return the dtype of the wavefunctio."""
+        return float
+
+    @property
     def params_shape(self):
         """Return the shape of the parameters."""
         return (10, 10)
@@ -42,6 +47,7 @@ class TempWavefunction(BaseWavefunction):
 def test_assign_wfns():
     """Test LinearCombinationWavefunction.assign_wfns."""
     test_wfn = TempWavefunction(4, 10)
+
     test = skip_init(LinearCombinationWavefunction)
     with pytest.raises(TypeError):
         LinearCombinationWavefunction.assign_wfns(test, (1, test_wfn))
@@ -50,11 +56,7 @@ def test_assign_wfns():
     test.nelec = 4
     with pytest.raises(ValueError):
         LinearCombinationWavefunction.assign_wfns(test, (test_wfn, TempWavefunction(5, 10)))
-    test.dtype = np.float64
-    with pytest.raises(ValueError):
-        LinearCombinationWavefunction.assign_wfns(
-            test, (test_wfn, TempWavefunction(4, 10, dtype=complex))
-        )
+    test.params = np.random.rand(10)
     test.memory = np.inf
     with pytest.raises(ValueError):
         LinearCombinationWavefunction.assign_wfns(

@@ -55,7 +55,6 @@ def test_least_squares():
     wfn._cache_fns = {}
     wfn.assign_nelec(2)
     wfn.assign_nspin(4)
-    wfn.assign_dtype(float)
     wfn.assign_params(np.array([1.0, -1.0]))
     ham = RestrictedChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
     objective = SystemEquations(wfn, ham, refwfn=0b0011, pspace=[0b0011, 0b1100])
@@ -76,7 +75,6 @@ def test_root():
     wfn._cache_fns = {}
     wfn.assign_nelec(2)
     wfn.assign_nspin(4)
-    wfn.assign_dtype(float)
     wfn.assign_params(np.array([1.0, -1.0]))
     ham = RestrictedChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
     objective = SystemEquations(wfn, ham, refwfn=0b0011, pspace=[0b0011, 0b1100], constraints=[])
