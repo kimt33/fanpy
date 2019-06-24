@@ -183,6 +183,8 @@ def test_jacobi_assign_jacobi_indices():
     test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 10
+    test._cache_fns = {}
+    test.load_cache()
 
     # not tuple or list
     with pytest.raises(TypeError):

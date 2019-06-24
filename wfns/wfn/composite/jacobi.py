@@ -323,6 +323,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         if jacobi_indices[0] > jacobi_indices[1]:
             jacobi_indices = jacobi_indices[::-1]
         self.jacobi_indices = tuple(jacobi_indices)
+        self.clear_cache()
 
     # FIXME: too many return statements, too many branches
     def _olp(self, sd):
