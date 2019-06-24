@@ -26,8 +26,8 @@ def test_assign_nelec():
     assert test.nelec == 2
 
 
-def test_nspin():
-    """Test BaseWavefunction.nspin."""
+def test_assign_nspin():
+    """Test BaseWavefunction.assign_nspin."""
     test = skip_init(disable_abstract(BaseWavefunction))
     # check errors
     with pytest.raises(TypeError):
