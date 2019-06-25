@@ -1,12 +1,14 @@
 """Test wfns.objective.schrodinger.base."""
+import functools
 import itertools as it
 
 import numpy as np
 import pytest
-from utils import disable_abstract
+from utils import disable_abstract, skip_init
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.objective.schrodinger.base import BaseSchrodinger
 from wfns.param import ParamContainer
+from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.ci.base import CIWavefunction
 
 
@@ -369,23 +371,126 @@ def test_baseschrodinger_get_energy_two_proj():
 
 def test_load_cache():
     """Test BaseSchrodinger.load_cache."""
-    wfn = CIWavefunction(2, 4)
-    ham = RestrictedChemicalHamiltonian(
+    test = skip_init(disable_abstract(BaseSchrodinger))
+    test.ham = RestrictedChemicalHamiltonian(
         np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
     )
-    test = disable_abstract(BaseSchrodinger)(wfn, ham)
+
+    # no overwrite of _olp and _olp_deriv
+    test.wfn = disable_abstract(BaseWavefunction)(2, 4)
+    test.wfn.params = np.arange(1)
+    test.load_cache()
+    assert not hasattr(test.wfn._olp, "__wrapped__")
+    assert not hasattr(test.wfn._olp_deriv, "__wrapped__")
+
+    # overwrite both _olp and _olp_deriv
+    test.wfn = disable_abstract(
+        BaseWavefunction,
+        dict_overwrite={"_olp": lambda self, sd: 1, "_olp_deriv": lambda self, sd, deriv: 1},
+    )(2, 4)
+    test.wfn.params = np.arange(1)
 
     test.load_cache(None)
-    assert test.wfn._cache_fns["overlap"].cache_info().maxsize is None
+    assert test.wfn._olp.cache_fn.cache_info().maxsize is None
+    assert test.wfn._olp_deriv.cache_fn.cache_info().maxsize is None
     test.load_cache(2000)
-    assert test.wfn._cache_fns["overlap"].cache_info().maxsize == 6
-    test.load_cache(2068)
-    assert test.wfn._cache_fns["overlap"].cache_info().maxsize == 7
+    assert test.wfn._olp.cache_fn.cache_info().maxsize == 8
+    assert test.wfn._olp_deriv.cache_fn.cache_info().maxsize == 8
+    test.load_cache(2400)
+    assert test.wfn._olp.cache_fn.cache_info().maxsize == 16
+    assert test.wfn._olp_deriv.cache_fn.cache_info().maxsize == 16
     test.load_cache("10mb")
-    assert test.wfn._cache_fns["overlap"].cache_info().maxsize == 73521
+    assert test.wfn._olp.cache_fn.cache_info().maxsize == 131072
+    assert test.wfn._olp_deriv.cache_fn.cache_info().maxsize == 65536
     test.load_cache("20.1gb")
-    assert test.wfn._cache_fns["overlap"].cache_info().maxsize == 147794109
+    assert test.wfn._olp.cache_fn.cache_info().maxsize == 268435456
+    assert test.wfn._olp_deriv.cache_fn.cache_info().maxsize == 134217728
     with pytest.raises(TypeError):
         test.load_cache([])
     with pytest.raises(ValueError):
         test.load_cache("20.1kb")
+
+    # overwrite only _olp
+    test.wfn = disable_abstract(BaseWavefunction, dict_overwrite={"_olp": lambda self, sd: 1})(2, 4)
+    test.wfn.params = np.arange(1)
+
+    test.load_cache(None)
+    assert test.wfn._olp.cache_fn.cache_info().maxsize is None
+    assert not hasattr(test.wfn._olp_deriv, "__wrapped__")
+    test.load_cache(2000)
+    assert test.wfn._olp.cache_fn.cache_info().maxsize == 32
+    assert not hasattr(test.wfn._olp_deriv, "__wrapped__")
+    test.load_cache(2400)
+    assert test.wfn._olp.cache_fn.cache_info().maxsize == 32
+    assert not hasattr(test.wfn._olp_deriv, "__wrapped__")
+    test.load_cache("10mb")
+    assert test.wfn._olp.cache_fn.cache_info().maxsize == 262144
+    assert not hasattr(test.wfn._olp_deriv, "__wrapped__")
+    test.load_cache("20.1gb")
+    assert test.wfn._olp.cache_fn.cache_info().maxsize == 536870912
+    assert not hasattr(test.wfn._olp_deriv, "__wrapped__")
+
+    # overwrite only _olp_deriv
+    test.wfn = disable_abstract(
+        BaseWavefunction, dict_overwrite={"_olp_deriv": lambda self, sd, deriv: 1}
+    )(2, 4)
+    test.wfn.params = np.arange(1)
+
+    test.load_cache(None)
+    assert not hasattr(test.wfn._olp, "__wrapped__")
+    assert test.wfn._olp_deriv.cache_fn.cache_info().maxsize is None
+    test.load_cache(2000)
+    assert not hasattr(test.wfn._olp, "__wrapped__")
+    assert test.wfn._olp_deriv.cache_fn.cache_info().maxsize == 16
+    test.load_cache(2400)
+    assert not hasattr(test.wfn._olp, "__wrapped__")
+    assert test.wfn._olp_deriv.cache_fn.cache_info().maxsize == 32
+    test.load_cache("10mb")
+    assert not hasattr(test.wfn._olp, "__wrapped__")
+    assert test.wfn._olp_deriv.cache_fn.cache_info().maxsize == 131072
+    test.load_cache("20.1gb")
+    assert not hasattr(test.wfn._olp, "__wrapped__")
+    assert test.wfn._olp_deriv.cache_fn.cache_info().maxsize == 268435456
+
+
+def test_clear_cache():
+    """Test BaseSchrdoinger.clear_cache."""
+    test = skip_init(disable_abstract(BaseSchrodinger))
+    test.ham = RestrictedChemicalHamiltonian(
+        np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
+    )
+
+    @functools.lru_cache(2)
+    def olp_cache(sd):
+        return 0.0
+
+    def _olp(wfn, sd):
+        """Overlap of wavefunction."""
+        return olp_cache(sd)
+
+    _olp.cache_fn = olp_cache
+
+    @functools.lru_cache(2)
+    def olp_deriv_cache(sd, deriv):
+        return 0.0
+
+    def _olp_deriv(wfn, sd, deriv):
+        """Return the derivative of the overlap of wavefunction."""
+        return olp_deriv_cache(sd, deriv)
+
+    _olp_deriv.cache_fn = olp_deriv_cache
+
+    test.wfn = disable_abstract(
+        BaseWavefunction, dict_overwrite={"_olp": _olp, "_olp_deriv": _olp_deriv}
+    )(2, 4)
+
+    test.wfn._olp(2)
+    test.wfn._olp(3)
+    test.wfn._olp_deriv(2, 0)
+    test.wfn._olp_deriv(3, 0)
+
+    assert test.wfn._olp.cache_fn.cache_info().currsize == 2
+    assert test.wfn._olp_deriv.cache_fn.cache_info().currsize == 2
+    test.clear_cache()
+    assert test.wfn._olp.cache_fn.cache_info().currsize == 0
+    assert test.wfn._olp_deriv.cache_fn.cache_info().currsize == 0

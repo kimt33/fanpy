@@ -1,5 +1,7 @@
 """Base class for objectives related to solving the Schrodinger equation."""
+import functools
 import sys
+import types
 
 import numpy as np
 import wfns.backend.slater as slater
@@ -487,39 +489,149 @@ class BaseSchrodinger(BaseObjective):
         Depends on attribute `ham` and `wfn`.
 
         """
+        # pylint: disable=W0212,C0103,R0912
         if memory is None:
-            self.wfn.load_cache()
-            return
-
-        if isinstance(memory, (int, float)):
-            memory = float(memory)
-        elif isinstance(memory, str):
-            if "gb" in memory.lower():
-                memory = 1e9 * float(memory.rstrip("gb ."))
-            elif "mb" in memory.lower():
-                memory = 1e6 * float(memory.rstrip("mb ."))
-            else:
-                raise ValueError('Memory given as a string should end with either "mb" or "gb".')
+            num_elements_olp = None
+            num_elements_olp_deriv = None
         else:
-            raise TypeError("Memory should be given as a `None`, int, float, or string.")
+            if isinstance(memory, (int, float)):
+                memory = float(memory)
+            elif isinstance(memory, str):
+                if "gb" in memory.lower():
+                    memory = 1e9 * float(memory.rstrip("gb ."))
+                elif "mb" in memory.lower():
+                    memory = 1e6 * float(memory.rstrip("mb ."))
+                else:
+                    raise ValueError(
+                        "Memory given as a string should end with either 'mb' or 'gb'."
+                    )
+            else:
+                raise TypeError("Memory should be given as a `None`, int, float, or string.")
 
-        # APPROXIMATE memory used so far
-        # NOTE: it's not too easy to guess the amount of memory used by a Python object, so we guess
-        # it here.
-        used_memory = (
-            sys.getsizeof(self.ham)
-            + sum(sys.getsizeof(i) for i in self.ham.__dict__)
-            + sys.getsizeof(self.wfn)
-            + sum(sys.getsizeof(i) for i in self.wfn.__dict__)
-        )
-        avail_memory = memory - used_memory
-        num_elements = avail_memory / (
-            self.wfn.params.itemsize
-            + sys.getsizeof(2 ** self.wfn.nspin)
-            + sys.getsizeof(self.wfn.nparams)
-        )
+            # APPROXIMATE memory used so far
+            # NOTE: it's not too easy to guess the amount of memory used by a Python object, so we
+            # guess it here.
+            used_memory = (
+                sys.getsizeof(self.ham)
+                + sum(sys.getsizeof(i) for i in self.ham.__dict__)
+                + sys.getsizeof(self.wfn)
+                + sum(sys.getsizeof(i) for i in self.wfn.__dict__)
+            )
+            avail_memory = memory - used_memory
 
-        # no need to cache if not derivatized right?
-        self.wfn.load_cache(
-            maxsize_olp=int(num_elements // 2), maxsize_deriv=int(num_elements // 2)
-        )
+            if not hasattr(self.wfn._olp, "is_template"):
+                avail_memory_olp = avail_memory / 2
+            else:
+                avail_memory_olp = 0
+
+            if not hasattr(self.wfn._olp_deriv, "is_template"):
+                avail_memory_olp_deriv = avail_memory - avail_memory_olp
+            else:
+                avail_memory_olp_deriv = 0
+                avail_memory_olp = avail_memory
+
+            # find out the number of elements possible within the given memory
+            # NOTE: here, we assume that the key to the cache is integer for Slater determinant  and
+            # the value is some transformation of the wavefunction parameters
+            num_elements_olp = avail_memory_olp / (
+                self.wfn.params.itemsize + sys.getsizeof(2 ** self.wfn.nspin)
+            )
+            # NOTE: here, we assume that the key to the cache is integer for Slater determinant and
+            # an integer for derivative index, and the value is some transformation of the
+            # wavefunction parameters
+            num_elements_olp_deriv = avail_memory_olp_deriv / (
+                self.wfn.params.itemsize + sys.getsizeof(2 ** self.wfn.nspin) + 8
+            )
+
+            # round down to the nearest power of 2
+            if num_elements_olp > 2:
+                num_elements_olp = 2 ** int(np.log2(num_elements_olp))
+            if num_elements_olp_deriv > 2:
+                num_elements_olp_deriv = 2 ** int(np.log2(num_elements_olp_deriv))
+
+        if not hasattr(self.wfn._olp, "is_template") and (
+            num_elements_olp is None or num_elements_olp > 2
+        ):
+
+            @functools.lru_cache(maxsize=num_elements_olp, typed=False)
+            def cached_olp(sd):
+                """Return the value that will be cached in future calls.
+
+                _olp function can be cached directly. However, this would mean that the instance
+                that calls this method (i.e. self) will also be cached. In order to avoid this
+                memory cost, the _olp method is called without the reference to `self`.
+
+                The _olp method of the wavefunction class is used instead of the wavefunction
+                instance (self.wfn) because the latter results in circular recursion.
+
+                """
+                return type(self.wfn)._olp(self.wfn, sd)
+
+            def _olp(wfn, sd):
+                """Return the overlap of the given Slater determinant.
+
+                This method will overwrite the existing _olp method of the instance.
+
+                """
+                # pylint: disable=W0613
+                return cached_olp(sd)
+
+            # Save the function that is cached so that we can clear the cache later
+            _olp.cache_fn = cached_olp
+
+            # NOTE: overwriting the method of an instance directly is not recommended normally, but
+            # is done here to avoid constructing a subclass with the overwritten method. Subclassing
+            # would require reinstantiating the wavefunction which can be memory intensive and is a
+            # bit of a pain to implement (the parameters are selected by reference). The class
+            # method isn't overwritten to keep this change as localized as possible
+            self.wfn._olp = types.MethodType(_olp, self.wfn)
+
+        if not hasattr(self.wfn._olp_deriv, "is_template") and (
+            num_elements_olp_deriv is None or num_elements_olp_deriv > 2
+        ):
+
+            @functools.lru_cache(maxsize=num_elements_olp_deriv, typed=False)
+            def cached_olp_deriv(sd, deriv):
+                """Return the value that will be cached in future calls.
+
+                _olp_deriv function can be cached directly. However, this would mean that the
+                instance that calls this method (i.e. self) will also be cached. In order to avoid
+                this memory cost, the _olp_deriv method is called without the reference to `self`.
+
+                The _olp_deriv method of the wavefunction class is used instead of the wavefunction
+                instance (self.wfn) because the latter results in circular recursion.
+
+                """
+                return type(self.wfn)._olp_deriv(self.wfn, sd, deriv)
+
+            def _olp_deriv(wfn, sd, deriv):
+                """Return the derivative of the overlap of the given Slater determinant.
+
+                This method will overwrite the existing _olp_deriv method of the instance.
+
+                """
+                # pylint: disable=W0613
+                return cached_olp_deriv(sd, deriv)
+
+            # Save the function that is cached so that we can clear the cache later
+            _olp_deriv.cache_fn = cached_olp_deriv
+
+            # NOTE: overwriting the method of an instance directly is not recommended normally, but
+            # is done here to avoid constructing a subclass with the overwritten method. Subclassing
+            # would require reinstantiating the wavefunction which can be memory intensive and is a
+            # bit of a pain to implement (the parameters are selected by reference). The class
+            # method isn't overwritten to keep this change as localized as possible
+            self.wfn._olp_deriv = types.MethodType(_olp_deriv, self.wfn)
+
+    def clear_cache(self):
+        """Clear the cache."""
+        # pylint: disable=W0212
+        try:
+            self.wfn._olp.cache_fn.cache_clear()
+        except AttributeError:
+            pass
+
+        try:
+            self.wfn._olp_deriv.cache_fn.cache_clear()
+        except AttributeError:
+            pass
