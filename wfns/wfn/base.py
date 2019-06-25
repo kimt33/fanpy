@@ -253,8 +253,11 @@ class BaseWavefunction(ParamContainer):
                     0.01j * scale * (np.random.rand(*self.params_shape).astype(complex) - 0.5)
                 )
 
-    def _olp(self, sd):
-        """Calculate the nontrivial overlap with the Slater determinant.
+    def _olp(self, sd):  # pylint: disable=C0103
+        """Return the nontrivial overlap with the Slater determinant.
+
+        This function, if overwritten, will be cached. At the moment, this method simply acts as a
+        template.
 
         Parameters
         ----------
@@ -274,11 +277,13 @@ class BaseWavefunction(ParamContainer):
         overlap with a nonseniority zero Slater determinant).
 
         """
-        # pylint: disable=C0103
-        raise NotImplementedError
 
-    def _olp_deriv(self, sd, deriv):
-        """Calculate the nontrivial derivative of the overlap with the Slater determinant.
+    def _olp_deriv(self, sd, deriv):  # pylint: disable=C0103
+        """Return the nontrivial derivative of the overlap with the Slater determinant.
+
+        This function, if overwritten, will be cached. At the moment, this method simply acts as a
+        template.
+
 
         Parameters
         ----------
@@ -302,9 +307,13 @@ class BaseWavefunction(ParamContainer):
         parameter that is not involved in the overlap would be zero).
 
         """
-        # pylint: disable=C0103
-        raise NotImplementedError
 
+    # NOTE: To distinguish the methods `_olp` and `_olp_deriv` when they are templates and when they
+    # are overwritten, the following attribute to the methods, `is_template`, exists when the the
+    # methods are templates. If these methods are overwritten, then the overwritten methods will not
+    # have this attribute.
+    _olp.is_template = True
+    _olp_deriv.is_template = True
 
     @abc.abstractproperty
     def params_shape(self):

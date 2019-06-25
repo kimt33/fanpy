@@ -144,20 +144,6 @@ def test_init():
     assert test.nspin == 10
 
 
-def test_olp():
-    """Test BaseWavefunction._olp."""
-    test = skip_init(disable_abstract(BaseWavefunction))
-    with pytest.raises(NotImplementedError):
-        test._olp(0b0101)
-
-
-def test_olp_deriv():
-    """Test BaseWavefunction._olp_deriv."""
-    test = skip_init(disable_abstract(BaseWavefunction))
-    with pytest.raises(NotImplementedError):
-        test._olp_deriv(0b0101, 0)
-
-
 def test_nspatial():
     """Test BaseWavefunction.nspatial."""
     test = skip_init(disable_abstract(BaseWavefunction))
