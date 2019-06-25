@@ -635,3 +635,8 @@ class BaseSchrodinger(BaseObjective):
             self.wfn._olp_deriv.cache_fn.cache_clear()
         except AttributeError:
             pass
+
+    def assign_params(self, params):
+        """Assign parameters."""
+        super().assign_params(params)
+        self.clear_cache()
