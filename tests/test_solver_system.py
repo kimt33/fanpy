@@ -52,7 +52,6 @@ class TempBaseWavefunction(BaseWavefunction):
 def test_least_squares():
     """Test wfns.solver.least_squares."""
     wfn = TempBaseWavefunction()
-    wfn._cache_fns = {}
     wfn.assign_nelec(2)
     wfn.assign_nspin(4)
     wfn.assign_params(np.array([1.0, -1.0]))
@@ -72,7 +71,6 @@ def test_least_squares():
 def test_root():
     """Test wfns.solver.root."""
     wfn = TempBaseWavefunction()
-    wfn._cache_fns = {}
     wfn.assign_nelec(2)
     wfn.assign_nspin(4)
     wfn.assign_params(np.array([1.0, -1.0]))

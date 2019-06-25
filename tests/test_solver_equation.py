@@ -66,7 +66,6 @@ def check_cma():
 def test_cma():
     """Test wnfs.solver.equation.cma."""
     wfn = TempBaseWavefunction()
-    wfn._cache_fns = {}
     wfn.assign_nelec(2)
     wfn.assign_nspin(4)
     wfn.assign_params()
@@ -103,7 +102,6 @@ def test_cma():
 def test_minimize():
     """Test wnfs.solver.equation.minimize."""
     wfn = TempBaseWavefunction()
-    wfn._cache_fns = {}
     wfn.assign_nelec(2)
     wfn.assign_nspin(4)
     wfn.assign_params()

@@ -1,6 +1,5 @@
 """Parent class of the wavefunctions."""
 import abc
-import functools
 
 import numpy as np
 from wfns.param import ParamContainer
@@ -43,10 +42,6 @@ class BaseWavefunction(ParamContainer):
         Assign the number of spin orbitals.
     assign_params(self, params)
         Assign parameters of the wavefunction.
-    load_cache(self)
-        Load the functions whose values will be cached.
-    clear_cache(self)
-        Clear the cache.
 
     Abstract Properties
     -------------------
@@ -140,6 +135,7 @@ class BaseWavefunction(ParamContainer):
         """
         return None
 
+    # FIXME: move to params.py
     @property
     def dtype(self):
         """Return the data type of wavefunction.
@@ -257,55 +253,6 @@ class BaseWavefunction(ParamContainer):
                     0.01j * scale * (np.random.rand(*self.params_shape).astype(complex) - 0.5)
                 )
 
-    def load_cache(self, maxsize_olp=None, maxsize_deriv=None):
-        """Load the functions whose values will be cached.
-
-        To minimize the cache size, the input is made as small as possible. Therefore, the cached
-        function is not a method of an instance (because the instance is an input) and the smallest
-        representation of the Slater determinant (an integer) is used as the only input. However,
-        the functions must access other properties/methods of the instance, so they are defined
-        within this method so that the instance is available within the namespace w/o use of
-        `global` or `local`.
-
-        Since the bitstring is used to represent the Slater determinant, they need to be processed,
-        which may result in repeated processing depending on when the cached function is accessed.
-
-        It is assumed that the cached functions will not be used to calculate redundant results. All
-        simplifications that can be made is assumed to have already been made. For example, it is
-        assumed that the overlap derivatized with respect to a parameter that is not associated with
-        the given Slater determinant will never need to be evaluated because these conditions are
-        caught before calling the cached functions.
-
-        Parameters
-        ----------
-        maxsize_olp : int
-            Number of results that will be cached for the `_olp` function.
-            Performs best when factor of 2.
-            Default (value of `None`) results in unbounded cache.
-        maxsize_deriv : int
-            Number of results that will be cached for the `_olp_deriv` function.
-            Performs best when factor of 2.
-            Default (value of `None`) results in unbounded cache.
-
-        """
-        # pylint: disable=C0103
-
-        # create function that will be cached
-        @functools.lru_cache(maxsize=maxsize_olp, typed=False)
-        def _olp(sd):
-            """Return cached overlap."""
-            return self._olp(sd)
-
-        @functools.lru_cache(maxsize=maxsize_deriv, typed=False)
-        def _olp_deriv(sd, deriv):
-            """Return cached derivative of the overlap."""
-            return self._olp_deriv(sd, deriv)
-
-        self._cache_fns = {}
-        # store the cached function
-        self._cache_fns["overlap"] = _olp
-        self._cache_fns["overlap derivative"] = _olp_deriv
-
     def _olp(self, sd):
         """Calculate the nontrivial overlap with the Slater determinant.
 
@@ -358,35 +305,6 @@ class BaseWavefunction(ParamContainer):
         # pylint: disable=C0103
         raise NotImplementedError
 
-    def clear_cache(self, key=None):
-        """Clear the cache.
-
-        Parameters
-        ----------
-        key : str
-            Key to the cached function in _cache_fns.
-            Default clears all cached functions.
-
-        Raises
-        ------
-        KeyError
-            If given key is not present in the _cache_fns.
-        ValueError
-            If cached function does not have decorator functools.lru_cache.
-
-        """
-        try:
-            if key is None:
-                for func in self._cache_fns.values():
-                    func.cache_clear()
-            else:
-                self._cache_fns[key].cache_clear()
-        except KeyError as error:
-            raise KeyError("Given function key is not present in _cache_fns") from error
-        except AttributeError as error:
-            raise AttributeError(
-                "Given cached function does not have decorator " "`functools.lru_cache`"
-            ) from error
 
     @abc.abstractproperty
     def params_shape(self):

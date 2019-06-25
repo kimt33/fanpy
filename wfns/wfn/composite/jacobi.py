@@ -89,10 +89,6 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         Assign the orbital type of the orbital rotation.
     assign_jacobi_indices(self, jacobi_indices)
         Assign the indices of the orbitals that will be rotated.
-    load_cache(self)
-        Load the functions whose values will be cached.
-    clear_cache(self)
-        Clear the cache.
     get_overlap(self, sd, deriv=None) : float
         Return the overlap of the wavefunction with a Slater determinant.
 
@@ -323,7 +319,6 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         if jacobi_indices[0] > jacobi_indices[1]:
             jacobi_indices = jacobi_indices[::-1]
         self.jacobi_indices = tuple(jacobi_indices)
-        self.clear_cache()
 
     # FIXME: too many return statements, too many branches
     def _olp(self, sd):
@@ -704,8 +699,8 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
 
         """
         if deriv is None:
-            return self._cache_fns["overlap"](sd)
+            return self._olp(sd)
         # if derivatization
         if not (isinstance(deriv, int) and deriv >= 0):
             raise ValueError("Index for derivatization must be a non-negative integer.")
-        return self._cache_fns["overlap derivative"](sd, deriv)
+        return self._olp_deriv(sd, deriv)

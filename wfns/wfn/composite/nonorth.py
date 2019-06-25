@@ -82,10 +82,6 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         Assign the number of spin orbitals.
     assign_params(self, params)
         Assign the orbital transformation matrix.
-    load_cache(self)
-        Load the functions whose values will be cached.
-    clear_cache(self)
-        Clear the cache.
     get_overlap(self, sd, deriv=None) : float
         Return the overlap of the wavefunction with a Slater determinant.
 
@@ -551,7 +547,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
 
         """
         if deriv is None:
-            return self._cache_fns["overlap"](sd)
+            return self._olp(sd)
 
         # if derivatization
         if not (isinstance(deriv, int) and deriv >= 0):
@@ -581,4 +577,4 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         if self.orbtype == "generalized" and not slater.occ(sd, row_removed):
             return 0.0
 
-        return self._cache_fns["overlap derivative"](sd, deriv)
+        return self._olp_deriv(sd, deriv)

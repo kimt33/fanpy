@@ -65,10 +65,6 @@ class APr2G(RankTwoApprox, APIG):
         Get the orbital pair that corresponds to the given column index.
     compute_permanent(self, col_inds, row_inds=None, deriv=None)
         Compute the permanent of the matrix that corresponds to the given orbital pairs.
-    load_cache(self)
-        Load the functions whose values will be cached.
-    clear_cache(self)
-        Clear the cache.
     get_overlap(self, sd, deriv=None) : float
         Return the overlap of the wavefunction with a Slater determinant.
     generate_possible_orbpairs(self, occ_indices)

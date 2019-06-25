@@ -84,10 +84,6 @@ class AP1roG(APIG):
         Get the orbital pair that corresponds to the given column index.
     compute_permanent(self, col_inds, row_inds=None, deriv=None)
         Compute the permanent of the matrix that corresponds to the given orbital pairs.
-    load_cache(self)
-        Load the functions whose values will be cached.
-    clear_cache(self)
-        Clear the cache.
     get_overlap(self, sd, deriv=None) : float
         Return the overlap of the wavefunction with a Slater determinant.
     generate_possible_orbpairs(self, occ_indices)
@@ -127,8 +123,6 @@ class AP1roG(APIG):
         self.assign_ref_sd(sd=ref_sd)
         self.assign_orbpairs(orbpairs=orbpairs)
         self.assign_params(params=params)
-        self._cache_fns = {}
-        self.load_cache()
 
     @property
     def template_params(self):
@@ -366,7 +360,7 @@ class AP1roG(APIG):
             if inds_annihilated.size == inds_created.size == 0:
                 return 1.0
 
-            return self._cache_fns["overlap"](sd)
+            return self._olp(sd)
         # if derivatization
         if not isinstance(deriv, (int, np.int64)):
             raise TypeError("Index for derivatization must be provided as an integer.")
@@ -376,4 +370,4 @@ class AP1roG(APIG):
         if inds_annihilated.size == inds_created.size == 0:
             return 0.0
 
-        return self._cache_fns["overlap derivative"](sd, deriv)
+        return self._olp_deriv(sd, deriv)

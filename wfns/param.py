@@ -29,8 +29,6 @@ class ParamContainer(abc.ABC):
         Initialize.
     assign_params(self, params)
         Assign parameters.
-    clear_cache(self)
-        Placeholder function that would clear the cache.
 
     """
 
@@ -84,16 +82,6 @@ class ParamContainer(abc.ABC):
                 "`np.float64` and `np.complex128`."
             )
         self.params = params
-
-    def clear_cache(self):
-        """Clear the cache of the cached functions.
-
-        This function doesn't actually do anything, but exists as a placeholder so that all if the
-        cache exists, it can be cleared when updating the parameters in the optimization process. So
-        it is essential that if a child of ParamContainer has a method for clearing its cache, then
-        it must be called clear_cache.
-
-        """
 
 
 class ParamMask(abc.ABC):
@@ -365,8 +353,6 @@ class ParamMask(abc.ABC):
             new_params = container.params.ravel()
             new_params[sel] = params[self._masks_objective_params[container]]
             container.assign_params(new_params)
-            if hasattr(container, "_cache_fns"):
-                container.clear_cache()
 
     def derivative_index(self, container, index):
         """Convert the index of the objective parameters to the index of the given container.

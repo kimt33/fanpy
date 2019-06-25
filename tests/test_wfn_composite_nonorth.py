@@ -243,12 +243,10 @@ def test_nonorth_olp_generalized():
     test.nelec = 2
     test.nspin = 4
     test.assign_wfn(CIWavefunction(2, 4))
-    test._cache_fns = {}
     test.wfn.params = np.arange(1, 7)
     wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
 
     test.params = [np.arange(1, 17).reshape(4, 4)]
-    test.load_cache()
     # 0b0101 uses [[1, 2, 3, 4],
     #              [9, 10, 11, 12]]
     assert np.isclose(
@@ -302,12 +300,10 @@ def test_nonorth_olp_unrestricted():
     test.nelec = 2
     test.nspin = 4
     test.assign_wfn(CIWavefunction(2, 4))
-    test._cache_fns = {}
     test.wfn.params = np.arange(1, 7)
     wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
 
     test.params = [np.array([[1, 2], [5, 6]]), np.array([[11, 12], [15, 16]])]
-    test.load_cache()
     # 0b0101 uses [[1, 2, 0, 0],
     #              [0, 0, 11, 12]]
     assert np.isclose(
@@ -361,12 +357,10 @@ def test_nonorth_olp_restricted():
     test.nelec = 2
     test.nspin = 4
     test.assign_wfn(CIWavefunction(2, 4))
-    test._cache_fns = {}
     test.wfn.params = np.arange(1, 7)
     wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
 
     test.params = [np.array([[1, 2], [5, 6]])]
-    test.load_cache()
     # 0b0101 uses [[1, 2, 0, 0],
     #              [0, 0, 1, 2]]
     assert np.isclose(
@@ -420,13 +414,11 @@ def test_nonorth_olp_deriv_generalized():
     test.nelec = 2
     test.nspin = 4
     test.assign_wfn(CIWavefunction(2, 4))
-    test._cache_fns = {}
     test.wfn.params = np.arange(1, 7)
     wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
 
     # generalized
     test.params = [np.arange(1, 17).reshape(4, 4)]
-    test.load_cache()
     # 0b0101 uses [[1, 2, 3, 4],
     #              [9, 10, 11, 12]]
     assert np.isclose(
@@ -450,12 +442,10 @@ def test_nonorth_olp_deriv_unrestricted():
     test.nelec = 2
     test.nspin = 4
     test.assign_wfn(CIWavefunction(2, 4))
-    test._cache_fns = {}
     test.wfn.params = np.arange(1, 7)
     wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
 
     test.params = [np.array([[1, 2], [5, 6]]), np.array([[11, 12], [15, 16]])]
-    test.load_cache()
     # 0b0101 uses [[1, 2, 0, 0],
     #              [0, 0, 11, 12]]
     assert np.isclose(
@@ -491,14 +481,11 @@ def test_nonorth_olp_deriv_restricted():
     test.nelec = 2
     test.nspin = 4
     test.assign_wfn(CIWavefunction(2, 4))
-    test._cache_fns = {}
     test.wfn.params = np.arange(1, 7)
     wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
 
     # restricted (one block)
-    test.clear_cache()
     test.params = [np.array([[1, 2], [5, 6]])]
-    test.load_cache()
     # 0b0110 uses [[5, 6, 0, 0],
     #              [0, 0, 1, 2]]
     assert np.isclose(
@@ -536,13 +523,11 @@ def test_nonorth_get_overlap():
     test.nelec = 2
     test.nspin = 4
     test.assign_wfn(CIWavefunction(2, 4))
-    test._cache_fns = {}
     test.wfn.params = np.arange(1, 7)
     wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
 
     # restricted
     test.params = [np.array([[1, 2], [5, 6]])]
-    test.load_cache()
     # 0b0101 uses [[1, 2, 0, 0],
     #              [0, 0, 1, 2]]
     assert np.isclose(
@@ -570,15 +555,11 @@ def test_nonorth_get_overlap():
     assert test.get_overlap(0b0101, 2) == 0
 
     # unrestricted
-    test.clear_cache()
     test.params = [np.array([[1, 2], [5, 6]]), np.array([[11, 12], [15, 16]])]
-    test.load_cache()
     assert np.isclose(test.get_overlap(0b0101, 6), 0, rtol=0, atol=1e-12)
 
     # generalized
-    test.clear_cache()
     test.params = [np.arange(1, 17).reshape(4, 4)]
-    test.load_cache()
     assert np.isclose(test.get_overlap(0b0101, 6), 0, rtol=0, atol=1e-12)
 
     # trivial cases

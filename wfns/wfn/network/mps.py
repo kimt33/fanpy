@@ -45,10 +45,6 @@ class MatrixProductState(BaseWavefunction):
         Assign the number of spin orbitals.
     assign_params(self, params)
         Assign parameters of the wavefunction.
-    load_cache(self)
-        Load the functions whose values will be cached.
-    clear_cache(self)
-        Clear the cache.
     get_overlap(self, sd, deriv=None) : float
         Return the overlap of the wavefunction with a Slater determinant.
     assign_dimension(self, dimension=None)
@@ -80,8 +76,6 @@ class MatrixProductState(BaseWavefunction):
         super().__init__(nelec, nspin)
         self.assign_dimension(dimension)
         self.assign_params(params)
-        self._cache_fns = {}
-        self.load_cache()
 
     # TODO: all of the auxiliary indices are fixed to be equal. This may need to be flexible
     def assign_dimension(self, dimension=None):
@@ -453,7 +447,7 @@ class MatrixProductState(BaseWavefunction):
 
         # if no derivatization
         if deriv is None:
-            return self._cache_fns["overlap"](sd)
+            return self._olp(sd)
         # if derivatization
         if not isinstance(deriv, (int, np.int64)):
             raise TypeError("Given derivatization index must be an integer.")
@@ -466,4 +460,4 @@ class MatrixProductState(BaseWavefunction):
         if deriv_occ != occ_indices[deriv_matrix]:
             return 0.0
 
-        return self._cache_fns["overlap derivative"](sd, deriv)
+        return self._olp_deriv(sd, deriv)

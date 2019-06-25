@@ -183,8 +183,6 @@ def test_jacobi_assign_jacobi_indices():
     test = skip_init(JacobiWavefunction)
     test.nelec = 4
     test.nspin = 10
-    test._cache_fns = {}
-    test.load_cache()
 
     # not tuple or list
     with pytest.raises(TypeError):
@@ -241,12 +239,10 @@ def test_jacobi_get_overlap():
     test = skip_init(JacobiWavefunction)
     test.nelec = 2
     test.nspin = 4
-    test._cache_fns = {}
     test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
     test.assign_wfn(CIWavefunction(2, 4))
     test.wfn.params = np.arange(1, 7)
     wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
-    test.load_cache()
 
     # generalized
     test.assign_orbtype("generalized")
@@ -307,7 +303,6 @@ def test_jacobi_get_overlap():
     # unrestricted
     test.assign_orbtype("unrestricted")
     test.assign_jacobi_indices((0, 1))
-    test.clear_cache()
     # jacobi matrix [[cos, sin, 0, 0],
     #                [-sin, cos, 0, 0],
     #                [0, 0, 1, 0],
@@ -334,7 +329,6 @@ def test_jacobi_get_overlap():
     # restricted
     test.assign_orbtype("restricted")
     test.assign_jacobi_indices((0, 1))
-    test.clear_cache()
     # jacobi matrix [[cos, sin, 0, 0],
     #                [-sin, cos, 0, 0],
     #                [0, 0, cos, sin],
@@ -387,10 +381,8 @@ def test_jacobi_get_overlap_restricted():
     test.nspin = 8
     test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
     test.assign_wfn(CIWavefunction(4, 8))
-    test._cache_fns = {}
     test.wfn.params = np.arange(1, test.wfn.nparams + 1)
     wfn_sd_coeff = {sd: test.wfn.params[index] for sd, index in test.wfn.dict_sd_index.items()}
-    test.load_cache()
 
     sin = np.sin(test.params)
     cos = np.cos(test.params)
@@ -513,10 +505,8 @@ def test_jacobi_get_overlap_der():
     test.nspin = 4
     test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
     test.assign_wfn(CIWavefunction(2, 4))
-    test._cache_fns = {}
     test.wfn.params = np.arange(1, 7)
     wfn_sd_coeff = {0b0101: 1, 0b0110: 2, 0b1100: 3, 0b0011: 4, 0b1001: 5, 0b1010: 6}
-    test.load_cache()
     sin = np.sin(test.params)
     cos = np.cos(test.params)
 
@@ -578,7 +568,6 @@ def test_jacobi_get_overlap_der():
     # unrestricted
     test.assign_orbtype("unrestricted")
     test.assign_jacobi_indices((0, 1))
-    test.clear_cache()
     # jacobi matrix [[cos, sin, 0, 0],
     #                [-sin, cos, 0, 0],
     #                [0, 0, 1, 0],
@@ -605,7 +594,6 @@ def test_jacobi_get_overlap_der():
     # restricted
     test.assign_orbtype("restricted")
     test.assign_jacobi_indices((0, 1))
-    test.clear_cache()
     # jacobi matrix [[cos, sin, 0, 0],
     #                [-sin, cos, 0, 0],
     #                [0, 0, cos, sin],
@@ -658,10 +646,8 @@ def test_jacobi_get_overlap_restricted_der():
     test.nspin = 8
     test.assign_params(np.array(2 * np.pi * (np.random.random() - 0.5)))
     test.assign_wfn(CIWavefunction(4, 8))
-    test._cache_fns = {}
     test.wfn.params = np.arange(1, test.wfn.nparams + 1)
     wfn_sd_coeff = {sd: test.wfn.params[index] for sd, index in test.wfn.dict_sd_index.items()}
-    test.load_cache()
 
     sin = np.sin(test.params)
     cos = np.cos(test.params)
@@ -821,9 +807,7 @@ def test_jacobi_compare_nonorth():
                     ),
                 )
             )
-            nonorth.clear_cache()
             jacobi.assign_params(np.array(theta))
-            jacobi.clear_cache()
             assert np.isclose(nonorth.get_overlap(sd), jacobi.get_overlap(sd))
 
     # two rotations
@@ -834,13 +818,11 @@ def test_jacobi_compare_nonorth():
                 nelec, nspin, wfn=doci, orbtype="restricted", jacobi_indices=(0, 1)
             )
             jacobi_one.assign_params(np.array(theta_one))
-            jacobi_one.clear_cache()
             for theta_two in np.linspace(-np.pi, np.pi, 10):
                 jacobi_two = JacobiWavefunction(
                     nelec, nspin, wfn=jacobi_one, orbtype="restricted", jacobi_indices=(2, 3)
                 )
                 jacobi_two.assign_params(np.array(theta_two))
-                jacobi_two.clear_cache()
 
                 nonorth.assign_params(
                     (
@@ -854,7 +836,6 @@ def test_jacobi_compare_nonorth():
                         ),
                     )
                 )
-                nonorth.clear_cache()
 
                 assert np.isclose(nonorth.get_overlap(sd), jacobi_two.get_overlap(sd))
 

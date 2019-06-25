@@ -41,10 +41,6 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
         Assign the number of spin orbitals.
     assign_params(self, params)
         Assign parameters of the wavefunction.
-    load_cache(self)
-        Load the functions whose values will be cached.
-    clear_cache(self)
-        Clear the cache.
 
     Abstract Properties
     -------------------
@@ -75,8 +71,6 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
         super().__init__(nelec, nspin)
         self.assign_wfn(wfn)
         self.assign_params(params)
-        self._cache_fns = {}
-        self.load_cache()
 
     def assign_wfn(self, wfn):
         """Assign the wavefunction.

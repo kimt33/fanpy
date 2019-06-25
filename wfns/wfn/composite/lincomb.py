@@ -44,10 +44,6 @@ class LinearCombinationWavefunction(BaseWavefunction):
         Assign the number of spin orbitals.
     assign_params(self, params)
         Assign parameters of the wavefunction.
-    load_cache(self)
-        Load the functions whose values will be cached.
-    clear_cache(self)
-        Clear the cache.
     assign_wfns(self, wfns)
         Assign the wavefunctions that will be linearly combined.
     get_overlap(self, sd, deriv=None) : float

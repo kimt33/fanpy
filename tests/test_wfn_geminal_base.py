@@ -10,7 +10,6 @@ class TempBaseGeminal(BaseGeminal):
 
     def __init__(self):
         """Do nothing."""
-        self._cache_fns = {}
 
     def generate_possible_orbpairs(self, occ_indices):
         """Generate orbital pairing scheme."""
@@ -329,8 +328,6 @@ def test_gem_compute_permanent_deriv():
     test.assign_orbpairs()
     test.assign_ngem(3)
     test.assign_params(np.random.rand(3, 15) * 10)
-    test._cache_fns = {}
-    test.load_cache()
 
     original_params = test.params[:]
     delta = np.zeros(test.params_shape)
@@ -340,10 +337,8 @@ def test_gem_compute_permanent_deriv():
             delta *= 0
             delta[i, j] = step
             test.assign_params(original_params)
-            test.clear_cache()
             one = test.compute_permanent(range(15))
             test.assign_params(test.params + delta)
-            test.clear_cache()
             two = test.compute_permanent(range(15))
             # FIXME: not quite sure why the difference between permanent derivative and finite
             #        difference increases as the step size decreases
@@ -372,8 +367,6 @@ def test_gem_get_overlap():
     test.assign_orbpairs()
     test.assign_ngem(3)
     test.assign_params(np.arange(45, dtype=float).reshape(3, 15))
-    test._cache_fns = {}
-    test.load_cache()
     assert test.get_overlap(0b001111) == 9 * (15 * 1 + 30 * 1) + 1 * (15 * 39 + 30 * 24)
     assert test.get_overlap(0b000111) == 0
     # check derivatives

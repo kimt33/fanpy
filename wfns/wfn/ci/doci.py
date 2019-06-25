@@ -55,10 +55,6 @@ class DOCI(CIWavefunction):
         Assign the number of spin orbitals.
     assign_params(self, params)
         Assign parameters of the wavefunction.
-    load_cache(self)
-        Load the functions whose values will be cached.
-    clear_cache(self)
-        Clear the cache.
     assign_spin(self, spin=None)
         Assign the spin of the wavefunction.
     assign_seniority(self, seniority=None)
