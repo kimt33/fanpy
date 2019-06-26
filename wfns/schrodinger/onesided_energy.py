@@ -81,8 +81,6 @@ class OneSidedEnergy(BaseSchrodinger):
         Wrap `integrate_wfn_sd` to be derivatized wrt the parameters of the objective.
     wrapped_integrate_sd_sd(self, sd1, sd2, deriv=None)
         Wrap `integrate_sd_sd` to be derivatized wrt the parameters of the objective.
-    get_energy_one_proj(self, refwfn, deriv=None)
-        Return the energy of the Schrodinger equation with respect to a reference wavefunction.
     get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=None)
         Return the energy of the Schrodinger equation after projecting out both sides.
     assign_refwfn(self, refwfn=None)
@@ -227,9 +225,47 @@ class OneSidedEnergy(BaseSchrodinger):
         return 1
 
     def objective(self, params):
-        """Return the energy of the wavefunction integrated against the reference wavefunction.
+        r"""Return the energy of the wavefunction integrated against the reference wavefunction.
 
-        See `BaseSchrodinger.get_energy_one_proj` for details.
+        .. math::
+
+            E \approx \frac{\left< \Phi_{ref} \middle| \hat{H} \middle| \Psi \right>}
+                           {\left< \Phi_{ref} \middle| \Psi \right>}
+
+        where :math:`\Phi_{ref}` is some reference wavefunction. Let
+
+        .. math::
+
+            \left| \Phi_{ref} \right> = \sum_{\mathbf{m} \in S}
+                                        g(\mathbf{m}) \left| \mathbf{m} \right>
+
+        Then,
+
+        .. math::
+
+            \left< \Phi_{ref} \middle| \hat{H} \middle| \Psi \right>
+            = \sum_{\mathbf{m} \in S}
+              g^*(\mathbf{m}) \left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right>
+
+        and
+
+        .. math::
+
+            \left< \Phi_{ref} \middle| \Psi \right> =
+            \sum_{\mathbf{m} \in S} g^*(\mathbf{m}) \left< \mathbf{m} \middle| \Psi \right>
+
+        Ideally, we want to use the actual wavefunction as the reference, but, without further
+        simplifications, :math:`\Psi` uses too many Slater determinants to be computationally
+        tractible. Then, we can truncate the Slater determinants as a subset, :math:`S`, such that
+        the most significant Slater determinants are included, while the energy can be tractibly
+        computed. This is equivalent to inserting a projection operator on one side of the integral
+
+        .. math::
+
+            \left< \Psi \right| \sum_{\mathbf{m} \in S}
+            \left| \mathbf{m} \middle> \middle< \mathbf{m} \middle| \hat{H} \middle| \Psi \right>
+            = \sum_{\mathbf{m} \in S}
+              f^*(\mathbf{m}) \left< \mathbf{m} \middle| \hat{H} \middle| \Psi \right>
 
         Parameters
         ----------
@@ -248,12 +284,33 @@ class OneSidedEnergy(BaseSchrodinger):
         # Save params
         self.save_params()
 
-        return self.get_energy_one_proj(self.refwfn)
+        get_overlap = self.wrapped_get_overlap
+        integrate_wfn_sd = self.wrapped_integrate_wfn_sd
+
+        # define reference Slater determinants and coefficients
+        if isinstance(self.refwfn, CIWavefunction):
+            ref_sds = self.refwfn.sd_vec
+            ref_coeffs = self.refwfn.params
+        elif isinstance(self.refwfn, tuple):
+            ref_sds = self.refwfn
+            ref_coeffs = np.array([get_overlap(i) for i in self.refwfn])
+
+        # overlaps and integrals
+        overlaps = np.array([get_overlap(i) for i in ref_sds])
+        integrals = np.array([integrate_wfn_sd(i) for i in ref_sds])
+
+        # norm
+        norm = np.sum(ref_coeffs * overlaps)
+
+        # energy
+        energy = np.sum(ref_coeffs * integrals) / norm
+
+        return energy
 
     def gradient(self, params):
         """Return the gradient of the objective.
 
-        See `BaseSchrodinger.get_energy_one_proj` for details.
+        See `OneSidedEnergy.objective` for details.
 
         Parameters
         ----------
@@ -272,4 +329,46 @@ class OneSidedEnergy(BaseSchrodinger):
         # Save params
         self.save_params()
 
-        return np.array([self.get_energy_one_proj(self.refwfn, i) for i in range(params.size)])
+        get_overlap = self.wrapped_get_overlap
+        integrate_wfn_sd = self.wrapped_integrate_wfn_sd
+
+        # define reference
+        if isinstance(self.refwfn, CIWavefunction):
+            ref_sds = self.refwfn.sd_vec
+            ref_coeffs = self.refwfn.params
+        elif isinstance(self.refwfn, tuple):
+            ref_sds = self.refwfn
+            ref_coeffs = np.array([get_overlap(i) for i in self.refwfn])
+
+        # overlaps and integrals
+        overlaps = np.array([get_overlap(i) for i in ref_sds])
+        integrals = np.array([integrate_wfn_sd(i) for i in ref_sds])
+
+        # norm
+        norm = np.sum(ref_coeffs * overlaps)
+
+        # energy
+        energy = np.sum(ref_coeffs * integrals) / norm
+
+        output = []
+        for deriv in range(params.size):
+            if isinstance(self.refwfn, CIWavefunction):
+                ref_deriv = self.param_selection.derivative_index(self.refwfn, deriv)
+                if ref_deriv is None:
+                    d_ref_coeffs = 0.0
+                else:
+                    d_ref_coeffs = np.zeros(self.refwfn.nparams, dtype=float)
+                    d_ref_coeffs[ref_deriv] = 1
+            else:
+                d_ref_coeffs = np.array([get_overlap(i, deriv) for i in self.refwfn])
+
+            d_norm = np.sum(d_ref_coeffs * overlaps)
+            d_norm += np.sum(ref_coeffs * np.array([get_overlap(i, deriv) for i in ref_sds]))
+            d_energy = np.sum(d_ref_coeffs * integrals) / norm
+            d_energy += (
+                np.sum(ref_coeffs * np.array([integrate_wfn_sd(i, deriv) for i in ref_sds])) / norm
+            )
+            d_energy -= d_norm * energy / norm
+            output.append(d_energy)
+
+        return np.array(output)

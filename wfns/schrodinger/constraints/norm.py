@@ -79,6 +79,7 @@ class NormConstraint(BaseSchrodinger):
             method.
 
         """
+        # pylint: disable=W0231
         if not isinstance(wfn, BaseWavefunction):
             raise TypeError(
                 "Given wavefunction is not an instance of BaseWavefunction (or its " "child)."
@@ -109,7 +110,7 @@ class NormConstraint(BaseSchrodinger):
         """
         return 1
 
-    # NOTE: much of this code is copied from BaseSchrodinger.get_energy_one_proj
+    # NOTE: much of this code is copied from OneSidedEnergy.objective
     def objective(self, params):
         r"""Return the norm of the wavefunction.
 
@@ -152,7 +153,7 @@ class NormConstraint(BaseSchrodinger):
         overlaps = np.array([get_overlap(i) for i in ref_sds])
         return np.sum(ref_coeffs * overlaps) - 1
 
-    # NOTE: much of this code is copied from BaseSchrodinger.get_energy_one_proj
+    # NOTE: much of this code is copied from OneSidedEnergy.gradient
     def gradient(self, params):
         r"""Gradient of the normalization constraint of the wavefunction.
 

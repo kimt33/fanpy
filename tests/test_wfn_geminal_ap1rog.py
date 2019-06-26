@@ -10,6 +10,20 @@ from wfns.solver.system import least_squares
 from wfns.wfn.geminal.ap1rog import AP1roG
 
 
+# FIXME: code is duplicated in test for SystemEquations
+def get_energy_one_proj(schrodinger, sd, deriv=None):
+    """Return the energy computed using OneSidedEnergy objective."""
+    temp_obj = OneSidedEnergy(
+        schrodinger.wfn,
+        schrodinger.ham,
+        param_selection=schrodinger.param_selection,
+        refwfn=schrodinger.refwfn,
+    )
+    if deriv is None:
+        return temp_obj.objective(schrodinger.params)
+    return temp_obj.gradient(schrodinger.params)[deriv]
+
+
 def test_ap1rog_assign_ref_sd():
     """Test AP1roG.assign_ref_sd."""
     test = skip_init(AP1roG)
@@ -128,10 +142,10 @@ def answer_ap1rog_h2_sto6g():
     energies_excited = []
     for i in xs:
         objective_ground.assign_params(np.array([i]))
-        energies_ground.append(objective_ground.get_energy_one_proj([0b0101, 0b1010]))
+        energies_ground.append(get_energy_one_proj(objective_ground, [0b0101, 0b1010]))
     for i in xs:
         objective_excited.assign_params(np.array([i]))
-        energies_excited.append(objective_excited.get_energy_one_proj([0b0101, 0b1010]))
+        energies_excited.append(get_energy_one_proj(objective_excited, [0b0101, 0b1010]))
 
     import matplotlib.pyplot as plt
 
@@ -155,7 +169,7 @@ def answer_ap1rog_h2_sto6g():
     def max_energy(params):
         """Find maximum energy."""
         objective_excited.assign_params(params)
-        energy = objective_excited.get_energy_one_proj([0b0101, 0b1010])
+        energy = get_energy_one_proj(objective_excited, [0b0101, 0b1010])
         return -energy
 
     import scipy.optimize

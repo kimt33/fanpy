@@ -4,6 +4,7 @@ from wfns.backend import sd_list, slater
 from wfns.param import ParamContainer
 from wfns.schrodinger.base import BaseSchrodinger
 from wfns.schrodinger.constraints.norm import NormConstraint
+from wfns.schrodinger.onesided_energy import OneSidedEnergy
 from wfns.wfn.ci.base import CIWavefunction
 
 
@@ -94,8 +95,6 @@ class SystemEquations(BaseSchrodinger):
         Wrap `integrate_wfn_sd` to be derivatized wrt the parameters of the objective.
     wrapped_integrate_sd_sd(self, sd1, sd2, deriv=None)
         Wrap `integrate_sd_sd` to be derivatized wrt the parameters of the objective.
-    get_energy_one_proj(self, refwfn, deriv=None)
-        Return the energy of the Schrodinger equation with respect to a reference wavefunction.
     get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=None)
         Return the energy of the Schrodinger equation after projecting out both sides.
     assign_pspace(self, pspace=None)
@@ -193,7 +192,8 @@ class SystemEquations(BaseSchrodinger):
         self.energy_type = energy_type
 
         if energy is None:
-            energy = self.get_energy_one_proj(self.refwfn)
+            temp_obj = OneSidedEnergy(wfn, ham, param_selection=param_selection, refwfn=self.refwfn)
+            energy = temp_obj.objective(self.params)
         elif not isinstance(energy, (float, complex)):
             raise TypeError("Energy must be given as a float or complex.")
         self.energy = ParamContainer(energy)
@@ -426,10 +426,12 @@ class SystemEquations(BaseSchrodinger):
                 ref_coeffs = np.array([get_overlap(i) for i in ref_sds])
 
             norm = np.sum(ref_coeffs * np.array([get_overlap(i) for i in ref_sds]))
-            energy = self.get_energy_one_proj(self.refwfn)
             energy = np.sum(ref_coeffs * np.array([integrate_wfn_sd(i) for i in ref_sds])) / norm
             # can be replaced with
-            energy = self.get_energy_one_proj(self.refwfn)
+            # temp_obj = OneSidedEnergy(
+            #     self.wfn, self.ham, param_selection=self.param_selection, refwfn=self.refwfn
+            # )
+            # energy = temp_obj.objective(self.params)
             self.energy.assign_params(energy)
 
         # objective
@@ -469,10 +471,10 @@ class SystemEquations(BaseSchrodinger):
 
         Notes
         -----
-        Much of the code is copied from `BaseSchrodinger.get_energy_one_proj` to compute the energy.
-        It is not called because the norm is still needed for the constraint (meaning that much of
-        the code will be copied over anyways), and the derivative of the energy uses some of the
-        the same matrices.
+        Much of the code is copied from `OneSidedEnergy.objective` to compute the energy. It is not
+        called because the norm is still needed for the constraint (meaning that much of the code
+        will be copied over anyways), and the derivative of the energy uses some of the the same
+        matrices.
 
         """
         params = np.array(params)

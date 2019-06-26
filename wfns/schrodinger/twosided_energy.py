@@ -94,8 +94,6 @@ class TwoSidedEnergy(BaseSchrodinger):
         Wrap `integrate_wfn_sd` to be derivatized wrt the parameters of the objective.
     wrapped_integrate_sd_sd(self, sd1, sd2, deriv=None)
         Wrap `integrate_sd_sd` to be derivatized wrt the parameters of the objective.
-    get_energy_one_proj(self, refwfn, deriv=None)
-        Return the energy of the Schrodinger equation with respect to a reference wavefunction.
     get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=None)
         Return the energy of the Schrodinger equation after projecting out both sides.
     objective(self, params) : float

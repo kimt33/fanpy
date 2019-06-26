@@ -5,8 +5,23 @@ from utils import skip_init
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.param import ParamContainer, ParamMask
 from wfns.schrodinger.constraints.norm import NormConstraint
+from wfns.schrodinger.onesided_energy import OneSidedEnergy
 from wfns.schrodinger.system_nonlinear import SystemEquations
 from wfns.wfn.ci.base import CIWavefunction
+
+
+# FIXME: code is duplicated in test for AP1roG
+def get_energy_one_proj(schrodinger, sd, deriv=None):
+    """Return the energy computed using OneSidedEnergy objective."""
+    temp_obj = OneSidedEnergy(
+        schrodinger.wfn,
+        schrodinger.ham,
+        param_selection=schrodinger.param_selection,
+        refwfn=schrodinger.refwfn,
+    )
+    if deriv is None:
+        return temp_obj.objective(schrodinger.params)
+    return temp_obj.gradient(schrodinger.params)[deriv]
 
 
 def test_system_init_energy():
@@ -18,7 +33,7 @@ def test_system_init_energy():
 
     test = SystemEquations(wfn, ham, energy=None, energy_type="compute")
     assert isinstance(test.energy, ParamContainer)
-    assert test.energy.params == test.get_energy_one_proj(0b0101)
+    assert test.energy.params == get_energy_one_proj(test, 0b0101)
 
     test = SystemEquations(wfn, ham, energy=2.0, energy_type="compute")
     assert test.energy.params == 2.0
@@ -228,7 +243,7 @@ def test_system_objective():
                 weight
                 * (
                     sum(ham.integrate_wfn_sd(wfn, sd))
-                    - test.get_energy_one_proj(refwfn) * wfn.get_overlap(sd)
+                    - get_energy_one_proj(test, refwfn) * wfn.get_overlap(sd)
                 ),
             )
         assert np.allclose(objective[-1], norm_answer)
@@ -313,8 +328,8 @@ def test_system_jacobian():
                     weight
                     * (
                         sum(ham.integrate_wfn_sd(wfn, sd, wfn_deriv=i))
-                        - test.get_energy_one_proj(refwfn, deriv=i) * wfn.get_overlap(sd)
-                        - test.get_energy_one_proj(refwfn) * wfn.get_overlap(sd, deriv=i)
+                        - get_energy_one_proj(test, refwfn, deriv=i) * wfn.get_overlap(sd)
+                        - get_energy_one_proj(test, refwfn) * wfn.get_overlap(sd, deriv=i)
                     ),
                 )
         assert np.allclose(jacobian[-1], norm_answer)
@@ -391,8 +406,8 @@ def test_system_jacobian_active_ciref():
                 weight
                 * (
                     sum(ham.integrate_wfn_sd(wfn, sd, wfn_deriv=i))
-                    - test.get_energy_one_proj(ciref, deriv=i) * wfn.get_overlap(sd)
-                    - test.get_energy_one_proj(ciref) * wfn.get_overlap(sd, deriv=i)
+                    - get_energy_one_proj(test, ciref, deriv=i) * wfn.get_overlap(sd)
+                    - get_energy_one_proj(test, ciref) * wfn.get_overlap(sd, deriv=i)
                 ),
             )
     assert np.allclose(
