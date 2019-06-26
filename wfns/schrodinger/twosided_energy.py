@@ -94,8 +94,6 @@ class TwoSidedEnergy(BaseSchrodinger):
         Wrap `integrate_wfn_sd` to be derivatized wrt the parameters of the objective.
     wrapped_integrate_sd_sd(self, sd1, sd2, deriv=None)
         Wrap `integrate_sd_sd` to be derivatized wrt the parameters of the objective.
-    get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=None)
-        Return the energy of the Schrodinger equation after projecting out both sides.
     objective(self, params) : float
         Return the value of the objective for the given parameters.
 
@@ -226,9 +224,36 @@ class TwoSidedEnergy(BaseSchrodinger):
         return 1
 
     def objective(self, params):
-        """Return the energy of the wavefunction integrated against the projection spaces.
+        r"""Return the energy of the wavefunction integrated against the projection spaces.
 
-        See `BaseSchrodinger.get_energy_two_proj` for details.
+        .. math::
+
+            E = \frac{\left< \Psi \middle| \hat{H} \middle| \Psi \right>}
+                     {\left< \Psi \middle| \Psi \right>}
+
+        Then, the numerator can be approximated by inserting projection operators:
+
+        .. math::
+
+            \left< \Psi \middle| \hat{H} \middle| \Psi \right> &\approx \left< \Psi \right|
+            \sum_{\mathbf{m} \in S_l} \left| \mathbf{m} \middle> \middle< \mathbf{m} \right|
+            \hat{H}
+            \sum_{\mathbf{n} \in S_r}
+            \left| \mathbf{n} \middle> \middle< \mathbf{n} \middle| \Psi_\mathbf{n} \right>\\
+            &\approx \sum_{\mathbf{m} \in S_l} \sum_{\mathbf{n} \in S_r}
+            \left< \Psi \middle| \mathbf{m} \right>
+            \left< \mathbf{m} \middle| \hat{H} \middle| \mathbf{n} \right>
+            \left< \mathbf{n} \middle| \Psi \right>\\
+
+        Likewise, the denominator can be approximated by inserting a projection operator:
+
+        .. math::
+
+            \left< \Psi \middle| \Psi \right> &\approx \left< \Psi \right|
+            \sum_{\mathbf{m} \in S_{norm}} \left| \mathbf{m} \middle> \middle< \mathbf{m} \middle|
+            \middle| \Psi \right>\\
+            &\approx \sum_{\mathbf{m} \in S_{norm}} \left< \Psi \middle| \mathbf{m} \right>^2
+
 
         Parameters
         ----------
@@ -247,10 +272,34 @@ class TwoSidedEnergy(BaseSchrodinger):
         # Save params
         self.save_params()
 
-        return self.get_energy_two_proj(self.pspace_l, self.pspace_r, self.pspace_n)
+        get_overlap = self.wrapped_get_overlap
+        integrate_sd_sd = self.wrapped_integrate_sd_sd
+
+        pspace_l = self.pspace_l
+        if self.pspace_r is None:
+            pspace_r = self.pspace_l
+        else:
+            pspace_r = self.pspace_r
+        if self.pspace_n is None:
+            pspace_n = self.pspace_l
+        else:
+            pspace_n = self.pspace_n
+
+        # overlaps and integrals
+        overlaps_l = np.array([[get_overlap(i)] for i in pspace_l])
+        overlaps_r = np.array([[get_overlap(i) for i in pspace_r]])
+        ci_matrix = np.array([[integrate_sd_sd(i, j) for j in pspace_r] for i in pspace_l])
+        overlaps_norm = np.array([get_overlap(i) for i in pspace_n])
+
+        # norm
+        norm = np.sum(overlaps_norm ** 2)
+
+        return np.sum(overlaps_l * ci_matrix * overlaps_r) / norm
 
     def gradient(self, params):
         """Return the gradient of the objective.
+
+        See `TwoSidedEnergy.objective` for details.
 
         Parameters
         ----------
@@ -269,9 +318,52 @@ class TwoSidedEnergy(BaseSchrodinger):
         # Save params
         self.save_params()
 
-        return np.array(
-            [
-                self.get_energy_two_proj(self.pspace_l, self.pspace_r, self.pspace_n, i)
-                for i in range(params.size)
-            ]
-        )
+        get_overlap = self.wrapped_get_overlap
+        integrate_sd_sd = self.wrapped_integrate_sd_sd
+
+        pspace_l = self.pspace_l
+        if self.pspace_r is None:
+            pspace_r = self.pspace_l
+        else:
+            pspace_r = self.pspace_r
+        if self.pspace_n is None:
+            pspace_n = self.pspace_l
+        else:
+            pspace_n = self.pspace_n
+
+        # overlaps and integrals
+        overlaps_l = np.array([[get_overlap(i)] for i in pspace_l])
+        overlaps_r = np.array([[get_overlap(i) for i in pspace_r]])
+        ci_matrix = np.array([[integrate_sd_sd(i, j) for j in pspace_r] for i in pspace_l])
+        overlaps_norm = np.array([get_overlap(i) for i in pspace_n])
+
+        # norm
+        norm = np.sum(overlaps_norm ** 2)
+
+        output = []
+        for deriv in range(params.size):
+            d_norm = 2 * np.sum(overlaps_norm * np.array([get_overlap(i, deriv) for i in pspace_n]))
+            d_energy = (
+                np.sum(
+                    np.array([[get_overlap(i, deriv)] for i in pspace_l]) * ci_matrix * overlaps_r
+                )
+                / norm
+            )
+            d_energy += (
+                np.sum(
+                    overlaps_l
+                    * np.array([[integrate_sd_sd(i, j, deriv) for j in pspace_r] for i in pspace_l])
+                    * overlaps_r
+                )
+                / norm
+            )
+            d_energy += (
+                np.sum(
+                    overlaps_l * ci_matrix * np.array([[get_overlap(i, deriv) for i in pspace_r]])
+                )
+                / norm
+            )
+            d_energy -= d_norm * np.sum(overlaps_l * ci_matrix * overlaps_r) / norm ** 2
+            output.append(d_energy)
+
+        return output

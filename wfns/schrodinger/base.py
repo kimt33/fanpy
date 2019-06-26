@@ -5,11 +5,9 @@ import sys
 import types
 
 import numpy as np
-import wfns.backend.slater as slater
 from wfns.ham.base import BaseHamiltonian
 from wfns.param import ParamMask
 from wfns.wfn.base import BaseWavefunction
-from wfns.wfn.ci.base import CIWavefunction
 
 
 class BaseSchrodinger(abc.ABC):
@@ -58,8 +56,6 @@ class BaseSchrodinger(abc.ABC):
         Wrap `integrate_wfn_sd` to be derivatized wrt the parameters of the objective.
     wrapped_integrate_sd_sd(self, sd1, sd2, deriv=None)
         Wrap `integrate_sd_sd` to be derivatized wrt the parameters of the objective.
-    get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=None)
-        Return the energy of the Schrodinger equation after projecting out both sides.
 
     Abstract Methods
     ----------------
@@ -309,126 +305,6 @@ class BaseSchrodinger(abc.ABC):
         if deriv is None:
             return 0.0
         return sum(self.ham.integrate_sd_sd(sd1, sd2, deriv=deriv))
-
-    def get_energy_two_proj(self, pspace_l, pspace_r=None, pspace_norm=None, deriv=None):
-        r"""Return the energy of the Schrodinger equation after projecting out both sides.
-
-        .. math::
-
-            E = \frac{\left< \Psi \middle| \hat{H} \middle| \Psi \right>}
-                     {\left< \Psi \middle| \Psi \right>}
-
-        Then, the numerator can be approximated by inserting projection operators:
-
-        .. math::
-
-            \left< \Psi \middle| \hat{H} \middle| \Psi \right> &\approx \left< \Psi \right|
-            \sum_{\mathbf{m} \in S_l} \left| \mathbf{m} \middle> \middle< \mathbf{m} \right|
-            \hat{H}
-            \sum_{\mathbf{n} \in S_r}
-            \left| \mathbf{n} \middle> \middle< \mathbf{n} \middle| \Psi_\mathbf{n} \right>\\
-            &\approx \sum_{\mathbf{m} \in S_l} \sum_{\mathbf{n} \in S_r}
-            \left< \Psi \middle| \mathbf{m} \right>
-            \left< \mathbf{m} \middle| \hat{H} \middle| \mathbf{n} \right>
-            \left< \mathbf{n} \middle| \Psi \right>\\
-
-        Likewise, the denominator can be approximated by inserting a projection operator:
-
-        .. math::
-
-            \left< \Psi \middle| \Psi \right> &\approx \left< \Psi \right|
-            \sum_{\mathbf{m} \in S_{norm}} \left| \mathbf{m} \middle> \middle< \mathbf{m} \middle|
-            \middle| \Psi \right>\\
-            &\approx \sum_{\mathbf{m} \in S_{norm}} \left< \Psi \middle| \mathbf{m} \right>^2
-
-        Parameters
-        ----------
-        pspace_l : list/tuple of int
-            Projection space used to truncate the numerator of the energy evaluation from the left.
-        pspace_r : {list/tuple of int, None}
-            Projection space used to truncate the numerator of the energy evaluation from the right.
-            By default, the same space as `l_pspace` is used.
-        pspace_norm : {list/tuple of int, None}
-            Projection space used to truncate the denominator of the energy evaluation
-            By default, the same space as `l_pspace` is used.
-        deriv : {int, None}
-            Index with respect to which the energy is derivatized.
-
-        Returns
-        -------
-        energy : float
-            Energy of the wavefunction with the given Hamiltonian.
-
-        Raises
-        ------
-        TypeError
-            If projection space is not a list/tuple of int.
-
-        """
-        if pspace_r is None:
-            pspace_r = pspace_l
-        if pspace_norm is None:
-            pspace_norm = pspace_l
-
-        for pspace in [pspace_l, pspace_r, pspace_norm]:
-            if not (
-                slater.is_sd_compatible(pspace)
-                or (
-                    isinstance(pspace, (list, tuple))
-                    and all(slater.is_sd_compatible(sd) for sd in pspace)
-                )
-            ):
-                raise TypeError(
-                    "Projection space must be given as a Slater determinant or a "
-                    "list/tuple of Slater determinants. See `backend.slater` for "
-                    "compatible representations of the Slater determinants."
-                )
-
-        if slater.is_sd_compatible(pspace_l):
-            pspace_l = [pspace_l]
-        if slater.is_sd_compatible(pspace_r):
-            pspace_r = [pspace_r]
-        if slater.is_sd_compatible(pspace_norm):
-            pspace_norm = [pspace_norm]
-        pspace_l = np.array(pspace_l)
-        pspace_r = np.array(pspace_r)
-        pspace_norm = np.array(pspace_norm)
-
-        get_overlap = self.wrapped_get_overlap
-        integrate_sd_sd = self.wrapped_integrate_sd_sd
-
-        # overlaps and integrals
-        overlaps_l = np.array([[get_overlap(i)] for i in pspace_l])
-        overlaps_r = np.array([[get_overlap(i) for i in pspace_r]])
-        ci_matrix = np.array([[integrate_sd_sd(i, j) for j in pspace_r] for i in pspace_l])
-        overlaps_norm = np.array([get_overlap(i) for i in pspace_norm])
-
-        # norm
-        norm = np.sum(overlaps_norm ** 2)
-
-        # energy
-        if deriv is None:
-            return np.sum(overlaps_l * ci_matrix * overlaps_r) / norm
-
-        d_norm = 2 * np.sum(overlaps_norm * np.array([get_overlap(i, deriv) for i in pspace_norm]))
-        d_energy = (
-            np.sum(np.array([[get_overlap(i, deriv)] for i in pspace_l]) * ci_matrix * overlaps_r)
-            / norm
-        )
-        d_energy += (
-            np.sum(
-                overlaps_l
-                * np.array([[integrate_sd_sd(i, j, deriv) for j in pspace_r] for i in pspace_l])
-                * overlaps_r
-            )
-            / norm
-        )
-        d_energy += (
-            np.sum(overlaps_l * ci_matrix * np.array([[get_overlap(i, deriv) for i in pspace_r]]))
-            / norm
-        )
-        d_energy -= d_norm * np.sum(overlaps_l * ci_matrix * overlaps_r) / norm ** 2
-        return d_energy
 
     def load_cache(self, memory=None):
         """Assign memory available for the objective.
