@@ -52,7 +52,7 @@ def test_assign_params():
         disable_abstract(
             BaseWavefunction,
             dict_overwrite={
-                "template_params": property(lambda self: np.identity(10)),
+                "params_initial_guess": property(lambda self: np.identity(10)),
                 "params_shape": property(lambda self: (10, 10)),
             },
         )
@@ -64,7 +64,7 @@ def test_assign_params():
         disable_abstract(
             BaseWavefunction,
             dict_overwrite={
-                "template_params": property(lambda self: np.identity(10)),
+                "params_initial_guess": property(lambda self: np.identity(10)),
                 "params_shape": property(lambda self: (10, 10)),
             },
         )
@@ -77,7 +77,7 @@ def test_assign_params():
         disable_abstract(
             BaseWavefunction,
             dict_overwrite={
-                "template_params": property(lambda self: np.identity(10)),
+                "params_initial_guess": property(lambda self: np.identity(10)),
                 "params_shape": property(lambda self: (10, 10)),
             },
         )
@@ -98,7 +98,7 @@ def test_assign_params():
         disable_abstract(
             BaseWavefunction,
             dict_overwrite={
-                "template_params": property(lambda self: np.identity(10)),
+                "params_initial_guess": property(lambda self: np.identity(10)),
                 "params_shape": property(lambda self: (10, 10)),
             },
         )
@@ -111,12 +111,12 @@ def test_assign_params():
         disable_abstract(
             BaseWavefunction,
             dict_overwrite={
-                "template_params": property(lambda self: np.identity(10)),
+                "params_initial_guess": property(lambda self: np.identity(10)),
                 "params_shape": property(lambda self: (10, 10)),
             },
         )
     )
-    test.assign_params(test.template_params.astype(complex), add_noise=True)
+    test.assign_params(test.params_initial_guess.astype(complex), add_noise=True)
     assert np.all(np.abs(np.real(test.params - np.identity(10))) <= 0.1 / 100)
     assert np.all(np.abs(np.imag(test.params - np.identity(10))) <= 0.01 * 0.1 / 100)
     assert not np.allclose(np.real(test.params), np.identity(10))
@@ -127,7 +127,7 @@ def test_assign_params():
         disable_abstract(
             BaseWavefunction,
             dict_overwrite={
-                "template_params": property(lambda self: np.zeros((1, 1, 1))),
+                "params_initial_guess": property(lambda self: np.zeros((1, 1, 1))),
                 "params_shape": property(lambda self: (1, 1, 1)),
             },
         )

@@ -73,7 +73,7 @@ class BaseGeminal(BaseWavefunction):
         Number of electron pairs.
     norbpair : int
         Number of orbital pairs used to construct the geminals.
-    template_params : np.ndarray
+    params_initial_guess : np.ndarray
         Default parameters of the wavefunction.
 
     Methods
@@ -165,14 +165,14 @@ class BaseGeminal(BaseWavefunction):
         return (self.ngem, self.norbpair)
 
     @property
-    def template_params(self):
+    def params_initial_guess(self):
         """Return the template of the parameters of the given wavefunction.
 
         Uses the spatial orbitals (alpha-beta spin orbital pairs) of HF ground state as reference.
 
         Returns
         -------
-        template_params : np.ndarray(ngem, norbpair)
+        params_initial_guess : np.ndarray(ngem, norbpair)
             Default parameters of the geminal wavefunction.
 
         Notes
@@ -305,14 +305,14 @@ class BaseGeminal(BaseWavefunction):
         Raises
         ------
         ValueError
-            If `params` does not have the same shape as the template_params.
+            If `params` does not have the same shape as the params_initial_guess.
             If given BaseGeminal instance does not have the same number of electrons.
             If given BaseGeminal instance does not have the same number of spin orbitals.
             If given BaseGeminal instance does not have the same number of geminals.
 
         Notes
         -----
-        Depends on template_params, and nparams.
+        Depends on params_initial_guess, and nparams.
 
         """
         if isinstance(params, BaseGeminal):

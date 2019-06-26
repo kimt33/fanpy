@@ -45,7 +45,7 @@ class BaseWavefunction(ParamContainer):
 
     Abstract Properties
     -------------------
-    template_params : np.ndarray
+    params_initial_guess : np.ndarray
         Default parameters of the wavefunction.
 
     Abstract Methods
@@ -69,7 +69,7 @@ class BaseWavefunction(ParamContainer):
         # pylint: disable=W0231
         self.assign_nelec(nelec)
         self.assign_nspin(nspin)
-        # assign_params not included because it depends on template_params, which may involve
+        # assign_params not included because it depends on params_initial_guess, which may involve
         # more attributes than is given above
 
     @property
@@ -213,15 +213,15 @@ class BaseWavefunction(ParamContainer):
             `np.complex128`.
             If `params` has complex data type and wavefunction has float data type.
         ValueError
-            If `params` does not have the same shape as the template_params.
+            If `params` does not have the same shape as the params_initial_guess.
 
         Notes
         -----
-        Depends on template_params, and nparams.
+        Depends on params_initial_guess, and nparams.
 
         """
         if params is None:
-            params = self.template_params
+            params = self.params_initial_guess
 
         # check if numpy array and if dtype is one of int, float, or complex
         super().assign_params(params)
@@ -327,12 +327,12 @@ class BaseWavefunction(ParamContainer):
         """
 
     @abc.abstractproperty
-    def template_params(self):
+    def params_initial_guess(self):
         """Return the template of the parameters of the given wavefunction.
 
         Returns
         -------
-        template_params : np.ndarray
+        params_initial_guess : np.ndarray
             Default parameters of the wavefunction.
 
         Notes

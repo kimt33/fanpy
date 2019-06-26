@@ -61,7 +61,7 @@ class AP1roG(APIG):
         Number of electron pairs.
     norbpair : int
         Number of orbital pairs used to construct the geminals.
-    template_params : np.ndarray
+    params_initial_guess : np.ndarray
         Default parameters of the wavefunction.
 
     Methods
@@ -125,7 +125,7 @@ class AP1roG(APIG):
         self.assign_params(params=params)
 
     @property
-    def template_params(self):
+    def params_initial_guess(self):
         """Return the template of the parameters of the given wavefunction.
 
         Since part of the coefficient matrix is constrained, these parts will be removed from the
@@ -133,7 +133,7 @@ class AP1roG(APIG):
 
         Returns
         -------
-        template_params : np.ndarray(ngem, norbpair)
+        params_initial_guess : np.ndarray(ngem, norbpair)
             Default parameters of the geminal wavefunction.
 
         """

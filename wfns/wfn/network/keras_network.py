@@ -32,7 +32,7 @@ class KerasNetwork(BaseWavefunction):
         Seniority of the wavefunction.
     dtype : {np.float64, np.complex128}
         Data type of the wavefunction.
-    template_params : np.ndarray
+    params_initial_guess : np.ndarray
         Default parameters of the wavefunction.
 
     Methods
@@ -67,7 +67,7 @@ class KerasNetwork(BaseWavefunction):
         """
         super().__init__(nelec, nspin)
         self.assign_model(model=model)
-        self._template_params = None
+        self._params_initial_guess = None
         self.assign_params(params=params)
 
     def assign_model(self, model=None):
@@ -177,12 +177,12 @@ class KerasNetwork(BaseWavefunction):
         return (self.nparams,)
 
     @property
-    def template_params(self):
+    def params_initial_guess(self):
         """Return the template of the parameters of the given wavefunction.
 
         Returns
         -------
-        template_params : np.ndarray
+        params_initial_guess : np.ndarray
             Default parameters of the wavefunction.
 
         Notes
@@ -190,11 +190,11 @@ class KerasNetwork(BaseWavefunction):
         May depend on params_shape and other attributes/properties.
 
         """
-        return self._template_params
+        return self._params_initial_guess
 
     # FIXME: not a very robust way of building an initial guess. It is not very good and requires
     # specific network structures.
-    def assign_template_params(self):
+    def assign_params_initial_guess(self):
         r"""Assign the intial guess for the HF ground state wavefunction.
 
         Since the template parameters are calculated/approximated, they are computed and stored away
@@ -242,7 +242,7 @@ class KerasNetwork(BaseWavefunction):
         # TODO: weights are not normalized
 
         params += np.linalg.lstsq(hidden_units, output)[0].tolist()
-        self._template_params = np.array(params, dtype=self.dtype)
+        self._params_initial_guess = np.array(params, dtype=self.dtype)
 
     def assign_params(self, params=None, add_noise=False):
         """Assign the parameters of the wavefunction.
@@ -262,18 +262,18 @@ class KerasNetwork(BaseWavefunction):
             `np.complex128`.
             If dtype is not one of float, complex, np.float64, np.complex128.
         ValueError
-            If `params` does not have the same shape as the template_params.
+            If `params` does not have the same shape as the params_initial_guess.
             If dtype is not np.float64.
 
         Notes
         -----
-        Depends on template_params, and nparams.
+        Depends on params_initial_guess, and nparams.
 
         """
         if params is None:
-            if self._template_params is None:
-                self.assign_template_params()
-            params = self.template_params
+            if self._params_initial_guess is None:
+                self.assign_params_initial_guess()
+            params = self.params_initial_guess
 
         # store parameters
         super().assign_params(params=params, add_noise=add_noise)

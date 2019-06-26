@@ -158,15 +158,15 @@ def test_gem_norbpair():
     assert test.norbpair == 15
 
 
-def test_gem_template_params():
-    """Test BaseGeminal.template_params."""
+def test_gem_params_initial_guess():
+    """Test BaseGeminal.params_initial_guess."""
     test = skip_init(disable_abstract(BaseGeminal))
     test.assign_nelec(6)
     test.assign_nspin(6)
     test.assign_orbpairs()
     test.assign_ngem(3)
     np.allclose(
-        test.template_params,
+        test.params_initial_guess,
         np.array(
             [
                 [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],

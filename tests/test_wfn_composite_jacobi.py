@@ -49,17 +49,17 @@ class TempWavefunction(BaseWavefunction):
         return (10, 10)
 
     @property
-    def template_params(self):
+    def params_initial_guess(self):
         """Return the default parameters."""
         return np.identity(10)
 
 
-def test_jacobi_template_params():
-    """Test JacobiWavefunction.template_params."""
+def test_jacobi_params_initial_guess():
+    """Test JacobiWavefunction.params_initial_guess."""
     test = skip_init(JacobiWavefunction)
-    assert test.template_params.size == 1
-    assert test.template_params.shape == ()
-    assert np.allclose(test.template_params, [0])
+    assert test.params_initial_guess.size == 1
+    assert test.params_initial_guess.shape == ()
+    assert np.allclose(test.params_initial_guess, [0])
 
 
 def test_jacobi_spin():

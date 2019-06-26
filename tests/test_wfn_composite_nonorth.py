@@ -44,7 +44,7 @@ class TempWavefunction(BaseWavefunction):
         return (10, 10)
 
     @property
-    def template_params(self):
+    def params_initial_guess(self):
         """Return the default parameters."""
         return np.identity(10)
 
@@ -151,8 +151,8 @@ def test_nonorth_seniority():
     assert test.seniority is None
 
 
-def test_nonorth_template_params():
-    """Test NonorthWavefunction.template_params."""
+def test_nonorth_params_initial_guess():
+    """Test NonorthWavefunction.params_initial_guess."""
     test = skip_init(NonorthWavefunction)
     test.nelec = 4
     test.nspin = 10
@@ -162,9 +162,9 @@ def test_nonorth_template_params():
     test_wfn.nelec = 4
     test.assign_wfn(test_wfn)
 
-    assert isinstance(test.template_params, tuple)
-    assert len(test.template_params) == 1
-    assert np.allclose(test.template_params[0], np.eye(5, 6))
+    assert isinstance(test.params_initial_guess, tuple)
+    assert len(test.params_initial_guess) == 1
+    assert np.allclose(test.params_initial_guess[0], np.eye(5, 6))
 
 
 def test_nonorth_nparams():

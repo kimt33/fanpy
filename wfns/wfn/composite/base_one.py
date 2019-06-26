@@ -44,7 +44,7 @@ class BaseCompositeOneWavefunction(BaseWavefunction):
 
     Abstract Properties
     -------------------
-    template_params : np.ndarray
+    params_initial_guess : np.ndarray
         Default parameters of the wavefunction.
 
     Abstract Methods

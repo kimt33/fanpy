@@ -44,7 +44,7 @@ class TempBaseWavefunction(BaseWavefunction):
         return (2,)
 
     @property
-    def template_params(self):
+    def params_initial_guess(self):
         """Return default parameters."""
         return np.array([0.0, 0.0])
 

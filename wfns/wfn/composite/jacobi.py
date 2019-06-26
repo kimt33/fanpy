@@ -64,7 +64,7 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         Seniority of the wavefunction.
     dtype : {np.float64, np.complex128}
         Data type of the wavefunction.
-    template_params : np.ndarray
+    params_initial_guess : np.ndarray
         Default parameters of the wavefunction.
     jacobi_rotation : tuple of np.ndarray
         Rotation matrix that corresponds to the given parameter.
@@ -162,12 +162,12 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
         return ()
 
     @property
-    def template_params(self):
+    def params_initial_guess(self):
         """Return the template of the parameters of the given wavefunction.
 
         Returns
         -------
-        template_params : np.ndarray(1)
+        params_initial_guess : np.ndarray(1)
             Angle with which the orbitals are rotated.
 
         """
@@ -232,11 +232,11 @@ class JacobiWavefunction(BaseCompositeOneWavefunction):
             `np.complex128`.
             If `params` has complex data type and wavefunction has float data type.
         ValueError
-            If `params` does not have the same shape as the template_params.
+            If `params` does not have the same shape as the params_initial_guess.
 
         Notes
         -----
-        Depends on dtype, template_params, and nparams.
+        Depends on dtype, params_initial_guess, and nparams.
 
         """
         if isinstance(params, (int, float)):

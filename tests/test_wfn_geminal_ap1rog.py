@@ -53,22 +53,22 @@ def test_ap1rog_assign_orbpairs():
     assert test.dict_ind_orbpair == {0: (2, 5)}
 
 
-def test_ap1rog_template_params():
-    """Test AP1roG.template_params."""
+def test_ap1rog_params_initial_guess():
+    """Test AP1roG.params_initial_guess."""
     test = skip_init(AP1roG)
     test.assign_nelec(4)
     test.assign_ngem(2)
     test.assign_nspin(6)
     test.assign_ref_sd()
     test.assign_orbpairs()
-    assert np.allclose(test.template_params, np.zeros((2, 1)))
+    assert np.allclose(test.params_initial_guess, np.zeros((2, 1)))
     test = skip_init(AP1roG)
     test.assign_nelec(6)
     test.assign_ngem(3)
     test.assign_nspin(20)
     test.assign_ref_sd()
     test.assign_orbpairs()
-    assert np.allclose(test.template_params, np.zeros((3, 7)))
+    assert np.allclose(test.params_initial_guess, np.zeros((3, 7)))
 
 
 def test_ap1rog_get_overlap():

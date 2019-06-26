@@ -31,7 +31,7 @@ class LinearCombinationWavefunction(BaseWavefunction):
         Seniority of the wavefunction.
     dtype : {np.float64, np.complex128}
         Data type of the wavefunction.
-    template_params : np.ndarray
+    params_initial_guess : np.ndarray
         Default parameters of the wavefunction.
 
     Methods
@@ -120,7 +120,7 @@ class LinearCombinationWavefunction(BaseWavefunction):
         return (len(self.wfns),)
 
     @property
-    def template_params(self):
+    def params_initial_guess(self):
         """Return the template parameters of the wavefunction.
 
         First wavefunction given is assumed to be the most important wavefunction. It will be used
@@ -128,7 +128,7 @@ class LinearCombinationWavefunction(BaseWavefunction):
 
         Returns
         -------
-        template_params : np.ndarray
+        params_initial_guess : np.ndarray
             Template parameters of the wavefunction.
 
         Notes

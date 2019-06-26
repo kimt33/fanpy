@@ -39,7 +39,7 @@ class TempWavefunction(BaseWavefunction):
         return (10, 10)
 
     @property
-    def template_params(self):
+    def params_initial_guess(self):
         """Return the default parameters."""
         return np.identity(10)
 
@@ -86,14 +86,14 @@ def test_seniority():
     assert test.seniority is None
 
 
-def test_template_params():
-    """Test LinearCombinationWavefunction.template_params."""
+def test_params_initial_guess():
+    """Test LinearCombinationWavefunction.params_initial_guess."""
     test_wfn = TempWavefunction(4, 10)
     test = LinearCombinationWavefunction(4, 10, (test_wfn,) * 3)
-    assert np.allclose(test.template_params, np.array([1, 0, 0]))
-    assert np.allclose(test.template_params, np.array([1, 0, 0]))
+    assert np.allclose(test.params_initial_guess, np.array([1, 0, 0]))
+    assert np.allclose(test.params_initial_guess, np.array([1, 0, 0]))
     test = LinearCombinationWavefunction(4, 10, (test_wfn, TempWavefunction(4, 10)))
-    assert np.allclose(test.template_params, np.array([1, 0]))
+    assert np.allclose(test.params_initial_guess, np.array([1, 0]))
 
 
 # TODO: test deriv functionality

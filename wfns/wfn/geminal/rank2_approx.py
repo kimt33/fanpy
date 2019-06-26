@@ -25,7 +25,7 @@ class RankTwoApprox:
 
     Properties
     ----------
-    template_params : np.ndarray
+    params_initial_guess : np.ndarray
         Default parameters of the wavefunction.
     lambdas : np.ndarray(ngem)
         The :math:`lambda` part of the parameters.
@@ -64,7 +64,7 @@ class RankTwoApprox:
     #        lambda - epsilon should be greater than 1
     #        lambda should be around 1 (epsilons should be less than 0)
     @property
-    def template_params(self):
+    def params_initial_guess(self):
         """Return the template of the parameters of the given wavefunction.
 
         Parameters are ordered as follows: lambda_1, ..., lambda_p, epsilon_1, ..., epsilon_k,
@@ -72,7 +72,7 @@ class RankTwoApprox:
 
         Returns
         -------
-        template_params : np.ndarray(ngem, norbpair)
+        params_initial_guess : np.ndarray(ngem, norbpair)
             Default parameters of the geminal wavefunction.
 
         Notes
@@ -80,8 +80,8 @@ class RankTwoApprox:
         Requires calculation. May be slow.
 
         """
-        # copied from BaseGeminal.template_params
-        # super().template_params is not called b/c BaseGeminal.template_params calls
+        # copied from BaseGeminal.params_initial_guess
+        # super().params_initial_guess is not called b/c BaseGeminal.params_initial_guess calls
         # self.params_shape, which comes from RankTwoApprox
         template = np.zeros(super().params_shape)
         for i in range(self.ngem):
@@ -157,7 +157,7 @@ class RankTwoApprox:
             `np.complex128`.
             If `params` has complex data type and wavefunction has float data type.
         ValueError
-            If `params` does not have the same shape as the template_params.
+            If `params` does not have the same shape as the params_initial_guess.
             If parameters create a zero in the denominator.
         NotImplementedError
             If BaseGeminal instance is given as the parameter.

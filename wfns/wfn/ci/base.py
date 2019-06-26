@@ -50,7 +50,7 @@ class CIWavefunction(BaseWavefunction):
         Spin of the wavefunction
     seniority : int
         Seniority of the wavefunction
-    template_params : np.ndarray
+    params_initial_guess : np.ndarray
         Default parameters of the CI wavefunction.
     dtype : {np.float64, np.complex128}
         Data type of the wavefunction.
@@ -127,7 +127,7 @@ class CIWavefunction(BaseWavefunction):
         return (len(self.sd_vec),)
 
     @property
-    def template_params(self):
+    def params_initial_guess(self):
         """Return the template of the parameters of the CI wavefunction.
 
         First Slater determinant of `sd_vec` is used as the reference.

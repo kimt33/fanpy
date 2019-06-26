@@ -99,8 +99,8 @@ def test_decompose_index():
         assert test.decompose_index(i) == (3, ind_occ, ind_row, ind_col)
 
 
-def test_template_params():
-    """Test MatrixProductState.template_params."""
+def test_params_initial_guess():
+    """Test MatrixProductState.params_initial_guess."""
     test = skip_init(MatrixProductState)
     test.nelec = 4
     test.nspin = 8
@@ -109,7 +109,7 @@ def test_template_params():
     answer1 = np.ones(10) * 10 ** (-1 / 4)
     answer2 = np.identity(10) * 10 ** (-1 / 4)
 
-    template = test.template_params
+    template = test.params_initial_guess
 
     tensor = template[0:40].reshape(4, 1, 10)
     assert np.allclose(tensor[0], 0)

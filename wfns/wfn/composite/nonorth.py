@@ -66,7 +66,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         Seniority of the wavefunction.
     dtype : {np.float64, np.complex128}
         Data type of the wavefunction.
-    template_params : np.ndarray
+    params_initial_guess : np.ndarray
         Default parameters of the wavefunction.
     orbtype : {'restricted', 'unrestricted', 'generalized'}
         Orbital type.
@@ -139,14 +139,14 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         return (self.nspatial, self.wfn.nspatial)
 
     @property
-    def template_params(self):
+    def params_initial_guess(self):
         """Return the template of the parameters of the given wavefunction.
 
         The orbital transformation matrix is the parameter of this (composite) wavefunction.
 
         Returns
         -------
-        template_params : np.ndarray
+        params_initial_guess : np.ndarray
             Rotation matrix.
 
         """
@@ -235,7 +235,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
 
         """
         if params is None:
-            params = self.template_params
+            params = self.params_initial_guess
 
         if isinstance(params, np.ndarray):
             params = (params,)
