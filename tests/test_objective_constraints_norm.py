@@ -1,10 +1,10 @@
-"""Test wfns.objective.constraints.norm."""
+"""Test wfns.schrodinger.constraints.norm."""
 import itertools as it
 
 import numpy as np
 import pytest
-from wfns.objective.constraints.norm import NormConstraint
 from wfns.param import ParamContainer
+from wfns.schrodinger.constraints.norm import NormConstraint
 from wfns.wfn.ci.base import CIWavefunction
 
 

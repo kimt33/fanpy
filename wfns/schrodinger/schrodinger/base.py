@@ -6,8 +6,8 @@ import types
 import numpy as np
 import wfns.backend.slater as slater
 from wfns.ham.base import BaseHamiltonian
-from wfns.objective.base import BaseObjective
 from wfns.param import ParamMask
+from wfns.schrodinger.base import BaseObjective
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.ci.base import CIWavefunction
 

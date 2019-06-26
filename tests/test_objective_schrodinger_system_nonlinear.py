@@ -1,11 +1,11 @@
-"""Test wfns.objective.system_nonlinear."""
+"""Test wfns.schrodinger.system_nonlinear."""
 import numpy as np
 import pytest
 from utils import skip_init
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.objective.constraints.norm import NormConstraint
-from wfns.objective.schrodinger.system_nonlinear import SystemEquations
 from wfns.param import ParamContainer, ParamMask
+from wfns.schrodinger.constraints.norm import NormConstraint
+from wfns.schrodinger.schrodinger.system_nonlinear import SystemEquations
 from wfns.wfn.ci.base import CIWavefunction
 
 
