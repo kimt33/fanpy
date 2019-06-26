@@ -64,7 +64,7 @@ def integrate_wfn_sd(wfn, sd, indices, deriv=None):
         return sign * wfn.get_overlap(slater.excite(sd, *creators, *annihilators), deriv=deriv)
 
 
-# FIXME: store in a subclass of BaseObjective
+# FIXME: store in a subclass of BaseSchrodinger
 # FIXME: much of the code was copied from OneSidedEnergy
 # FIXME: not sure if this needs to be normalize
 # FIXME: add threshold value below which the contribution from the Slater determinant is discarded

@@ -55,7 +55,6 @@ Wavefunctions
 Objectives
 ==========
 
-* :class:`Base Objective <wfns.schrodinger.base2.BaseObjective>`
 * Constraints
 
   * :class:`Normalization Constraint <wfns.schrodinger.constraints.norm.NormConstraint>`
@@ -157,7 +156,6 @@ Scripts
       wfns.solver.wrappers.wrap_scipy
       wfns.solver.wrappers.wrap_skopt
 
-      wfns.schrodinger.base2.BaseObjective
       wfns.schrodinger.constraints.norm.NormConstraint
       wfns.schrodinger.base.BaseSchrodinger
       wfns.schrodinger.system_nonlinear.SystemEquations

@@ -232,4 +232,4 @@ where :math:`\Phi` can be
     \sum_{\mathbf{m} \in S_{trunc}} f^*(\mathbf{m}) \left< \mathbf{m} \middle| \Psi \right> - 1 = 0
 
 Though there is no abstract base class for the constraints specifically, they should follow the same
-structure as the abstract base class, :class:`BaseObjective <wfns.schrodinger.base2.BaseObjective>`.
+structure as the abstract base class, :class:`BaseSchrodinger <wfns.schrodinger.base.BaseSchrodinger>`.

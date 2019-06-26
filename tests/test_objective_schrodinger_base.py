@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from utils import disable_abstract, skip_init
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.param import ParamContainer
+from wfns.param import ParamContainer, ParamMask
 from wfns.schrodinger.base import BaseSchrodinger
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.ci.base import CIWavefunction
@@ -38,6 +38,84 @@ def test_baseschrodinger_init():
     assert test.tmpfile == "tmpfile.npy"
     assert np.allclose(test.param_selection.all_params, wfn.params)
     assert np.allclose(test.param_selection.active_params, wfn.params)
+
+
+def test_baseschrodinger_assign_param_selection():
+    """Test BaseSchrodinger.assign_param_selection."""
+    test = skip_init(disable_abstract(BaseSchrodinger))
+
+    test.assign_param_selection(())
+    assert isinstance(test.param_selection, ParamMask)
+
+    param1 = ParamContainer(1)
+    param2 = ParamContainer(np.array([2, 3]))
+    param3 = ParamContainer(np.array([4, 5, 6, 7]))
+    param_selection = [
+        (param1, False),
+        (param2, np.array(0)),
+        (param3, np.array([True, False, False, True])),
+    ]
+    for mask in [param_selection, ParamMask(*param_selection)]:
+        test.assign_param_selection(mask)
+        assert len(test.param_selection._masks_container_params) == 3
+        container, sel = test.param_selection._masks_container_params.popitem()
+        assert container == param3
+        assert np.allclose(sel, np.array([0, 3]))
+        container, sel = test.param_selection._masks_container_params.popitem()
+        assert container == param2
+        assert np.allclose(sel, np.array([0]))
+        container, sel = test.param_selection._masks_container_params.popitem()
+        assert container == param1
+        assert np.allclose(sel, np.array([]))
+
+    with pytest.raises(TypeError):
+        test.assign_param_selection(np.array([(param1, False)]))
+
+
+def test_baseschrodinger_params():
+    """Test BaseSchrodinger.params."""
+    param1 = ParamContainer(1)
+    param2 = ParamContainer(np.array([2, 3]))
+    param3 = ParamContainer(np.array([4, 5, 6, 7]))
+
+    wfn = CIWavefunction(2, 4)
+    ham = RestrictedChemicalHamiltonian(
+        np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
+    )
+    test = disable_abstract(BaseSchrodinger)(
+        wfn,
+        ham,
+        param_selection=[
+            (param1, False),
+            (param2, np.array(0)),
+            (param3, np.array([True, False, False, True])),
+        ],
+    )
+    assert np.allclose(test.params, np.array([2, 4, 7]))
+
+
+def test_baseschrodinger_assign_params():
+    """Test BaseSchrodinger.assign_params."""
+    param1 = ParamContainer(1)
+    param2 = ParamContainer(np.array([2, 3]))
+    param3 = ParamContainer(np.array([4, 5, 6, 7]))
+    wfn = CIWavefunction(2, 4)
+    ham = RestrictedChemicalHamiltonian(
+        np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
+    )
+    test = disable_abstract(BaseSchrodinger)(
+        wfn,
+        ham,
+        param_selection=[
+            (param1, False),
+            (param2, np.array(0)),
+            (param3, np.array([True, False, False, True])),
+        ],
+    )
+    test.assign_params(np.array([99, 98, 97]))
+    assert np.allclose(param1.params, [1])
+    assert np.allclose(param2.params, [99, 3])
+    assert np.allclose(param3.params, [98, 5, 6, 97])
 
 
 def test_baseschrodinger_wrapped_get_overlap():

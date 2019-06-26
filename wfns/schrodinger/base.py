@@ -1,4 +1,5 @@
 """Base class for objectives related to solving the Schrodinger equation."""
+import abc
 import functools
 import sys
 import types
@@ -7,12 +8,11 @@ import numpy as np
 import wfns.backend.slater as slater
 from wfns.ham.base import BaseHamiltonian
 from wfns.param import ParamMask
-from wfns.schrodinger.base2 import BaseObjective
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.ci.base import CIWavefunction
 
 
-class BaseSchrodinger(BaseObjective):
+class BaseSchrodinger(abc.ABC):
     """Base class for objectives related to solving the Schrodinger equation.
 
     Attributes
@@ -126,9 +126,100 @@ class BaseSchrodinger(BaseObjective):
 
         if param_selection is None:
             param_selection = ParamMask((self.wfn, None))
+        self.assign_param_selection(param_selection=param_selection)
 
-        super().__init__(param_selection, tmpfile=tmpfile)
+        if not isinstance(tmpfile, str):
+            raise TypeError("`tmpfile` must be a string.")
+        self.tmpfile = tmpfile
+
         self.load_cache(memory=memory)
+
+    @property
+    def params(self):
+        """Return the parameters of the objective at the current state.
+
+        Returns
+        -------
+        params : np.ndarray(K,)
+            Parameters of the objective.
+
+        """
+        return self.param_selection.active_params
+
+    def save_params(self):
+        """Save all of the parameters in the `param_selection` to the temporary file.
+
+        All of the parameters are saved, even if it was frozen in the objective.
+
+        """
+        if self.tmpfile != "":
+            np.save(self.tmpfile, self.param_selection.all_params)
+
+    def assign_param_selection(self, param_selection=None):
+        """Select parameters that will be active in the objective.
+
+        Parameters
+        ----------
+        param_selection : {list, tuple, ParamMask, None}
+            Selection of parameters that will be used to construct the objective.
+            If list/tuple, then each entry is a 2-tuple of the parameter object and the numpy
+            indexing array for the active parameters. See `ParamMask.__init__` for details.
+
+        """
+        if param_selection is None:
+            param_selection = ()
+        if isinstance(param_selection, (list, tuple)):
+            param_selection = ParamMask(*param_selection)
+        elif not isinstance(param_selection, ParamMask):
+            raise TypeError(
+                "Selection of parameters, `param_selection`, must be a list, tuple, or "
+                "ParamMask instance."
+            )
+        self.param_selection = param_selection
+
+    def assign_params(self, params):
+        """Assign the parameters to the wavefunction and/or hamiltonian.
+
+        Parameters
+        ----------
+        params : {np.ndarray(K, )}
+            Parameters used by the objective method.
+
+        Raises
+        ------
+        TypeError
+            If `params` is not a one-dimensional numpy array.
+
+        """
+        self.param_selection.load_params(params)
+        self.clear_cache()
+
+    @abc.abstractproperty
+    def num_eqns(self):
+        """Return the number of equations in the objective.
+
+        Returns
+        -------
+        num_eqns : int
+            Number of equations in the objective.
+
+        """
+
+    @abc.abstractmethod
+    def objective(self, params):
+        """Return the value of the objective for the given parameters.
+
+        Parameters
+        ----------
+        params : np.ndarray
+            Parameter thatof the objective.
+
+        Returns
+        -------
+        objective_value : float
+            Value of the objective for the given parameters.
+
+        """
 
     # FIXME: there are problems when wfn is a composite wavefunction (wfn must distinguish between
     #        the different )
@@ -635,8 +726,3 @@ class BaseSchrodinger(BaseObjective):
             self.wfn._olp_deriv.cache_fn.cache_clear()
         except AttributeError:
             pass
-
-    def assign_params(self, params):
-        """Assign parameters."""
-        super().assign_params(params)
-        self.clear_cache()
