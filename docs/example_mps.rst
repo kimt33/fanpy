@@ -40,7 +40,7 @@ Optimizer
     from wfns.wfn.network.mps import MatrixProductState
     from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
     from wfns.backend.sd_list import sd_list
-    from wfns.schrodinger.schrodinger.least_squares import LeastSquaresEquations
+    from wfns.schrodinger.least_squares import LeastSquaresEquations
     from wfns.solver.equation import cma
 
 

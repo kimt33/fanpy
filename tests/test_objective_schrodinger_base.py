@@ -1,4 +1,4 @@
-"""Test wfns.schrodinger.schrodinger.base."""
+"""Test wfns.schrodinger.base."""
 import functools
 import itertools as it
 
@@ -7,7 +7,7 @@ import pytest
 from utils import disable_abstract, skip_init
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.param import ParamContainer
-from wfns.schrodinger.schrodinger.base import BaseSchrodinger
+from wfns.schrodinger.base import BaseSchrodinger
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.ci.base import CIWavefunction
 

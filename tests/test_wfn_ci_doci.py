@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from utils import find_datafile, skip_init
 from wfns.ham.senzero import SeniorityZeroHamiltonian
-from wfns.schrodinger.schrodinger.onesided_energy import OneSidedEnergy
+from wfns.schrodinger.onesided_energy import OneSidedEnergy
 from wfns.solver.equation import cma
 from wfns.wfn.ci.doci import DOCI
 

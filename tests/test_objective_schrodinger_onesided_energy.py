@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from utils import skip_init
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
-from wfns.schrodinger.schrodinger.onesided_energy import OneSidedEnergy
+from wfns.schrodinger.onesided_energy import OneSidedEnergy
 from wfns.wfn.ci.base import CIWavefunction
 
 

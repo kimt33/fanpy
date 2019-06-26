@@ -55,18 +55,18 @@ Wavefunctions
 Objectives
 ==========
 
-* :class:`Base Objective <wfns.schrodinger.base.BaseObjective>`
+* :class:`Base Objective <wfns.schrodinger.base2.BaseObjective>`
 * Constraints
 
   * :class:`Normalization Constraint <wfns.schrodinger.constraints.norm.NormConstraint>`
 
 * Schrödinger Equation
 
-  * :class:`Base Schrodinger Equation <wfns.schrodinger.schrodinger.base.BaseSchrodinger>`
-  * :class:`System of Equations <wfns.schrodinger.schrodinger.system_nonlinear.SystemEquations>`
-  * :class:`Least Squared Sum of Equations <wfns.schrodinger.schrodinger.least_squares.LeastSquaresEquations>`
-  * :class:`One Sided Energy <wfns.schrodinger.schrodinger.onesided_energy.OneSidedEnergy>`
-  * :class:`Two Sided Energy <wfns.schrodinger.schrodinger.twosided_energy.TwoSidedEnergy>`
+  * :class:`Base Schrodinger Equation <wfns.schrodinger.base.BaseSchrodinger>`
+  * :class:`System of Equations <wfns.schrodinger.system_nonlinear.SystemEquations>`
+  * :class:`Least Squared Sum of Equations <wfns.schrodinger.least_squares.LeastSquaresEquations>`
+  * :class:`One Sided Energy <wfns.schrodinger.onesided_energy.OneSidedEnergy>`
+  * :class:`Two Sided Energy <wfns.schrodinger.twosided_energy.TwoSidedEnergy>`
 
 Solvers
 =======
@@ -157,13 +157,13 @@ Scripts
       wfns.solver.wrappers.wrap_scipy
       wfns.solver.wrappers.wrap_skopt
 
-      wfns.schrodinger.base.BaseObjective
+      wfns.schrodinger.base2.BaseObjective
       wfns.schrodinger.constraints.norm.NormConstraint
-      wfns.schrodinger.schrodinger.base.BaseSchrodinger
-      wfns.schrodinger.schrodinger.system_nonlinear.SystemEquations
-      wfns.schrodinger.schrodinger.least_squares.LeastSquaresEquations
-      wfns.schrodinger.schrodinger.onesided_energy.OneSidedEnergy
-      wfns.schrodinger.schrodinger.twosided_energy.TwoSidedEnergy
+      wfns.schrodinger.base.BaseSchrodinger
+      wfns.schrodinger.system_nonlinear.SystemEquations
+      wfns.schrodinger.least_squares.LeastSquaresEquations
+      wfns.schrodinger.onesided_energy.OneSidedEnergy
+      wfns.schrodinger.twosided_energy.TwoSidedEnergy
 
       wfns.wfn.base.BaseWavefunction
       wfns.wfn.ci.base.CIWavefunction

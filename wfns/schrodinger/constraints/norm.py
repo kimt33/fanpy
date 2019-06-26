@@ -1,9 +1,9 @@
 """Normalization constraint on the wavefunction."""
 import numpy as np
 import wfns.backend.slater as slater
-from wfns.schrodinger.base import BaseObjective
-from wfns.schrodinger.schrodinger.base import BaseSchrodinger
-from wfns.schrodinger.schrodinger.onesided_energy import OneSidedEnergy
+from wfns.schrodinger.base2 import BaseObjective
+from wfns.schrodinger.base import BaseSchrodinger
+from wfns.schrodinger.onesided_energy import OneSidedEnergy
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.ci.base import CIWavefunction
 

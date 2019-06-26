@@ -2,9 +2,9 @@
 import numpy as np
 from wfns.backend import sd_list, slater
 from wfns.param import ParamContainer
-from wfns.schrodinger.base import BaseObjective
+from wfns.schrodinger.base import BaseSchrodinger
+from wfns.schrodinger.base2 import BaseObjective
 from wfns.schrodinger.constraints.norm import NormConstraint
-from wfns.schrodinger.schrodinger.base import BaseSchrodinger
 from wfns.wfn.ci.base import CIWavefunction
 
 

@@ -1,9 +1,9 @@
-"""Test wfns.schrodinger.base."""
+"""Test wfns.schrodinger.base2."""
 import numpy as np
 import pytest
 from utils import disable_abstract
 from wfns.param import ParamContainer, ParamMask
-from wfns.schrodinger.base import BaseObjective
+from wfns.schrodinger.base2 import BaseObjective
 
 
 def test_baseobjective_init():

@@ -3,8 +3,8 @@ import numpy as np
 import pytest
 from utils import find_datafile, skip_init
 from wfns.ham.senzero import SeniorityZeroHamiltonian
-from wfns.schrodinger.schrodinger.onesided_energy import OneSidedEnergy
-from wfns.schrodinger.schrodinger.system_nonlinear import SystemEquations
+from wfns.schrodinger.onesided_energy import OneSidedEnergy
+from wfns.schrodinger.system_nonlinear import SystemEquations
 from wfns.solver.equation import minimize
 from wfns.solver.system import least_squares
 from wfns.wfn.geminal.ap1rog import AP1roG

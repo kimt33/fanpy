@@ -30,7 +30,7 @@ we generate the following script
     from wfns.wfn.geminal.ap1rog import AP1roG
     from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
     from wfns.backend.sd_list import sd_list
-    from wfns.schrodinger.schrodinger.least_squares import LeastSquaresEquations
+    from wfns.schrodinger.least_squares import LeastSquaresEquations
     from wfns.solver.equation import cma
 
 
@@ -124,7 +124,7 @@ The script can be read as a sequence of steps:
    variable, :code:`objective`, can be assigned to a different Schrodinger equation instance or be
    initialized with different parameters. For more information, go to the :code:`__init__` method of
    the Schrodinger equation instance in the :py:mod:`objective.schrodinger
-   <wfns.schrodinger.schrodinger>` module. Different constraints (the default is the normalization
+   <wfns.schrodinger>` module. Different constraints (the default is the normalization
    constraint) can be found in the :py:mod:`objetive.constraints <wfns.schrodinger.constraints>`
    module.
 7. Solver is called to optimize the wavefunction. The solver can be changed to a different solver
