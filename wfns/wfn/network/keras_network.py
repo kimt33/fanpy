@@ -235,14 +235,14 @@ class KerasNetwork(BaseWavefunction):
                 "Cannot generate initial guess for Keras network because the final "
                 "hidden layer does not have enough units for the number of electrons."
             )
-        hidden_units = np.zeros((len(hidden_sds), num_hidden_orbs), dtype=self.dtype)
+        hidden_units = np.zeros((len(hidden_sds), num_hidden_orbs))
         for i, hidden_sd in enumerate(hidden_sds):
             hidden_units[i, hidden_sd] = 1
         output = np.eye(1, len(hidden_sds))[0]
         # TODO: weights are not normalized
 
         params += np.linalg.lstsq(hidden_units, output)[0].tolist()
-        self._params_initial_guess = np.array(params, dtype=self.dtype)
+        self._params_initial_guess = np.array(params)
 
     def assign_params(self, params=None, add_noise=False):
         """Assign the parameters of the wavefunction.
