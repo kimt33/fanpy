@@ -1,5 +1,6 @@
 """Test wfns.wavefunction.geminals.apr2g.APr2G."""
 import numpy as np
+import pytest
 from utils import find_datafile
 from wfns.ham.senzero import SeniorityZeroHamiltonian
 from wfns.schrodinger.onesided_energy import OneSidedEnergy
@@ -64,6 +65,7 @@ def answer_apr2g_h2_631gdp():
     print(apr2g.params)
 
 
+@pytest.mark.slow
 def test_apr2g_apr2g_h2_631gdp_slow():
     """Test ground state APr2G wavefunction using H2 with HF/6-31G** orbitals.
 
@@ -174,6 +176,7 @@ def answer_apr2g_lih_sto6g():
     print(apr2g.params)
 
 
+@pytest.mark.slow
 def test_apr2g_apr2g_lih_sto6g_slow():
     """Test APr2G wavefunction using LiH with HF/STO-6G orbitals.
 

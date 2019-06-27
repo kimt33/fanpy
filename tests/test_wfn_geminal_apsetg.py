@@ -141,6 +141,7 @@ def answer_apsetg_h2_631gdp():
     print(apsetg.params)
 
 
+@pytest.mark.slow
 def test_apsetg_h2_631gdp_slow():
     """Test BasicAPsetG wavefunction using H2 with HF/6-31G** orbitals."""
     # Can be read in using HORTON
@@ -183,6 +184,7 @@ def answer_apsetg_lih_sto6g():
     print(apsetg.params)
 
 
+@pytest.mark.slow
 def test_apsetg_lih_sto6g_slow():
     """Test BasicAPsetG with LiH using HF/STO-6G orbitals.
 

@@ -149,6 +149,7 @@ def answer_apg_h2_631gdp():
     print(apg.params)
 
 
+@pytest.mark.slow
 def test_apg_h2_631gdp_slow():
     """Test APG wavefunction using H2 with HF/6-31G** orbitals.
 
@@ -203,6 +204,7 @@ def answer_apg_lih_sto6g():
     print(apg.params)
 
 
+@pytest.mark.slow
 def test_apg_lih_sto6g_slow():
     """Test APG wavefunction using H2 with LiH/STO-6G orbital.
 

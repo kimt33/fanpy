@@ -121,6 +121,7 @@ def test_doci_h4_hf_sto6g():
     assert abs(energy + nuc_nuc - (-1.884948574812363)) < 1e-7
 
 
+@pytest.mark.slow
 def test_doci_h2_hf_631gdp_slow():
     """Test DOCI wavefunction for H2 (6-31G**)."""
     nelec = 2

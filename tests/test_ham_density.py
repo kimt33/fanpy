@@ -731,6 +731,7 @@ def test_density_matrix_restricted_lih_sto6g():
     )
 
 
+@pytest.mark.slow
 def test_density_matrix_restricted_lih_631g_slow():
     """Test density.density_matrix using LiH system (FCI/6-31G) with restricted orbitals.
 

@@ -158,6 +158,7 @@ def test_integrate_sd_sd_lih_631g_case():
     )
 
 
+@pytest.mark.slow
 def test_integrate_sd_sd_lih_631g_slow():
     """Test UnrestrictedChemicalHamiltonian.integrate_sd_sd using LiH HF/6-31G orbitals.
 
@@ -295,6 +296,7 @@ def test_integrate_sd_sd_deriv_fdiff_h2_sto6g():
                 assert np.allclose(finite_diff, derivative, atol=1e-5)
 
 
+@pytest.mark.slow
 def test_integrate_sd_sd_deriv_fdiff_h4_sto6g_slow():
     """Test UnrestrictedChemicalHamiltonian._integrate_sd_sd_deriv with using H4/STO6G.
 

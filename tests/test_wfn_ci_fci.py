@@ -83,6 +83,7 @@ def test_fci_lih_sto6g():
     assert abs(energy + nuc_nuc - (-7.9723355823)) < 1e-7
 
 
+@pytest.mark.slow
 def test_fci_lih_631g_slow():
     """Test FCI wavefunction for LiH 6-31G.
 
