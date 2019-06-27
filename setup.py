@@ -19,18 +19,18 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 setup(
     name="fanpy",
     version="0.0.0",
-    description="A module for evaluating, differentiating, and integrating Gaussian functions.",
+    description="Research tool for developing methods for solving the Schrodinger equation.",
     long_description=long_description,
     # Denotes that our long_description is in Markdown; valid values are
     # text/plain, text/x-rst, and text/markdown
     long_description_content_type="text/markdown",
-    url="https://github.com/pypa/sampleproject",
+    url="https://github.com/quantumelephant/fanpy",
     # This should be your name or the name of the organization which owns the
     # project.
     author="Taewon D. Kim",
     # This should be a valid email address corresponding to the author listed
     # above.
-    author_email="david.kim.91@gmail.com",
+    author_email="davidkim91@gmail.com",
     # Classifiers help users find your project by categorizing it.
     #
     # For a list of valid classifiers, see https://pypi.org/classifiers/
@@ -40,7 +40,7 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        "Development Status :: 1 - Planning",
+        "Development Status :: 2 - Pre-Alpha",
         # Indicate who your project is intended for
         "Intended Audience :: Science/Research",
         "Intended Audience :: Education",
@@ -50,28 +50,16 @@ setup(
         "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
         # Specify the Python versions you support here.
         # These classifiers are *not* checked by 'pip install'. See instead
-        "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
     ],
-    keywords="wavefunction hamiltonian optimization schrodinger equation quantum chemistry",
+    keywords="wavefunction hamiltonian optimization schrodinger equation quantum chemistry physics",
     packages=find_packages(exclude=["docs", "tests"]),
-    python_requires=">=3.4",
+    python_requires=">=3.5",
     install_requires=["numpy", "scipy", "cma"],
     extras_require={
-        "dev": [
-            "tox",
-            "pytest",
-            "pytest-cov",
-            "flake8",
-            "flake8-pydocstyle",
-            "flake8-import-order",
-            "pep8-naming",
-            "pylint",
-            "bandit",
-            "black",
-        ],
+        "dev": ["tox"],
         "test": ["tox", "pytest", "pytest-cov"],
         "horton": ["horton"],
         "pyscf": ["pyscf"],
@@ -92,8 +80,8 @@ setup(
     },
     # List additional URLs that are relevant to your project as a dict.
     project_urls={
-        "Bug Reports": "https://github.com/theochem/gbasis/issues",
+        "Bug Reports": "https://github.com/quantumelephant/fanpy/issues",
         "Organization": "https://github.com/quantumelephant/",
-        "Source": "https://github.com/theochem/gbasis/",
+        "Source": "https://github.com/quantumelephant/fanpy/",
     },
 )
