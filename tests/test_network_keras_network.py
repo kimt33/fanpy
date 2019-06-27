@@ -1,15 +1,17 @@
 """Tests for wfns.wfn.network.keras_network.KerasNetwork."""
-import keras
 import numpy as np
 import pytest
 from utils import skip_init
 from wfns.backend.sd_list import sd_list
 import wfns.backend.slater as slater
-from wfns.wfn.network.keras_network import KerasNetwork
 
 
 def test_keras_assign_model():
     """Test KerasNetwork.assign_model."""
+    pytest.importorskip("keras")
+    import keras
+    from wfns.wfn.network.keras_network import KerasNetwork
+
     test = skip_init(KerasNetwork)
     test.nspin = 10
     # default
@@ -77,6 +79,10 @@ def test_keras_assign_model():
 
 def test_keras_nparams():
     """Test KerasNetwork.nparams."""
+    pytest.importorskip("keras")
+    import keras
+    from wfns.wfn.network.keras_network import KerasNetwork
+
     test = skip_init(KerasNetwork)
     test.nspin = 10
     model = keras.engine.sequential.Sequential()
@@ -88,6 +94,10 @@ def test_keras_nparams():
 
 def test_keras_params_shape():
     """Test KerasNetwork.params_shape."""
+    pytest.importorskip("keras")
+    import keras
+    from wfns.wfn.network.keras_network import KerasNetwork
+
     test = skip_init(KerasNetwork)
     test.nspin = 10
     model = keras.engine.sequential.Sequential()
@@ -99,6 +109,9 @@ def test_keras_params_shape():
 
 def test_keras_params_initial_guess():
     """Test KerasNetwork.params_initial_guess."""
+    pytest.importorskip("keras")
+    from wfns.wfn.network.keras_network import KerasNetwork
+
     test = skip_init(KerasNetwork)
     params = np.random.rand(100)
     test._params_initial_guess = params
@@ -107,6 +120,10 @@ def test_keras_params_initial_guess():
 
 def test_keras_assign_params_initial_guess():
     """Test KerasNetwork.assign_params_initial_guess."""
+    pytest.importorskip("keras")
+    import keras
+    from wfns.wfn.network.keras_network import KerasNetwork
+
     test = skip_init(KerasNetwork)
     test.nelec = 4
     test.nspin = 10
@@ -137,6 +154,9 @@ def test_keras_assign_params_initial_guess():
 
 def test_keras_assign_params():
     """Test KerasNetwork.assign_params."""
+    pytest.importorskip("keras")
+    from wfns.wfn.network.keras_network import KerasNetwork
+
     test = skip_init(KerasNetwork)
     test.nspin = 10
     test.assign_model()
@@ -162,6 +182,10 @@ def test_keras_assign_params():
 
 def test_keras_init():
     """Test KerasNetwork.__init__."""
+    pytest.importorskip("keras")
+    import keras
+    from wfns.wfn.network.keras_network import KerasNetwork
+
     test = KerasNetwork(4, 10)
     # check model
     assert isinstance(test.model, keras.engine.training.Model)
@@ -187,6 +211,10 @@ def test_keras_init():
 
 def test_keras_get_overlap():
     """Test KerasNetwork.get_overlap."""
+    pytest.importorskip("keras")
+    import keras
+    from wfns.wfn.network.keras_network import KerasNetwork
+
     test = skip_init(KerasNetwork)
     test.nspin = 4
     model = keras.engine.sequential.Sequential()
