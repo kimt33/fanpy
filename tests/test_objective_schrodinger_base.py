@@ -301,3 +301,22 @@ def test_clear_cache():
     test.clear_cache()
     assert test.wfn._olp.cache_fn.cache_info().currsize == 0
     assert test.wfn._olp_deriv.cache_fn.cache_info().currsize == 0
+
+
+def test_baseschrodinger_save_params(tmp_path):
+    """Test BaseSchrodinger.save_params."""
+    wfn = CIWavefunction(2, 4)
+    wfn.assign_params(np.random.rand(wfn.nparams))
+
+    ham = RestrictedChemicalHamiltonian(
+        np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
+    )
+    filename = tmp_path / "tmpfile.npy"
+
+    test = disable_abstract(BaseSchrodinger)(wfn, ham)
+    test.save_params()
+    assert not filename.is_file()
+
+    test = disable_abstract(BaseSchrodinger)(wfn, ham, tmpfile=str(filename))
+    test.save_params()
+    assert np.allclose(wfn.params, np.load(filename))
