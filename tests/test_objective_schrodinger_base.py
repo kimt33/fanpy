@@ -225,12 +225,12 @@ def test_load_cache():
     with pytest.raises(ValueError):
         test.load_cache("20.1kb")
 
-    assert (test.wfn._olp(0b0011) == 0)
+    assert test.wfn._olp(0b0011) == 0
     test.wfn.params[0] = -1
-    assert (test.wfn._olp(0b0011) == 0)
-    assert (test.wfn._olp_deriv(0b0011, 0) == -1)
+    assert test.wfn._olp(0b0011) == 0
+    assert test.wfn._olp_deriv(0b0011, 0) == -1
     test.wfn.params[0] = 0
-    assert (test.wfn._olp_deriv(0b0011, 0) == -1)
+    assert test.wfn._olp_deriv(0b0011, 0) == -1
 
     # overwrite only _olp
     test.wfn = disable_abstract(BaseWavefunction, dict_overwrite={"_olp": lambda self, sd: 1})(2, 4)
