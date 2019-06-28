@@ -18,6 +18,9 @@ def test_norm_init():
     test = NormConstraint(wfn)
     assert test.wfn == wfn
 
+    with pytest.raises(TypeError):
+        NormConstraint(wfn, tmpfile=4)
+
 
 def test_norm_num_eqns():
     """Test NormConstraint.num_eqns."""

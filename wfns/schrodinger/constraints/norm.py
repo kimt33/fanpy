@@ -145,8 +145,6 @@ class NormConstraint(BaseSchrodinger):
             ref_sds = ref.sd_vec
             ref_coeffs = ref.params
         else:
-            if slater.is_sd_compatible(ref):
-                ref = [ref]
             ref_sds = ref
             ref_coeffs = np.array([get_overlap(i) for i in ref])
         # Compute
@@ -191,8 +189,6 @@ class NormConstraint(BaseSchrodinger):
             ref_sds = ref.sd_vec
             ref_coeffs = ref.params
         else:
-            if slater.is_sd_compatible(ref):
-                ref = [ref]
             ref_sds = ref
             ref_coeffs = np.array([get_overlap(i) for i in ref])
         overlaps = np.array([get_overlap(i) for i in ref_sds])
