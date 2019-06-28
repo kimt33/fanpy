@@ -271,12 +271,9 @@ class BaseSchrodinger(abc.ABC):
         # change derivative index
         wfn_deriv = self.param_selection.derivative_index(self.wfn, deriv)
         ham_deriv = self.param_selection.derivative_index(self.ham, deriv)
-        if wfn_deriv is not None:
-            return sum(self.ham.integrate_wfn_sd(self.wfn, sd, wfn_deriv=wfn_deriv))
-        # b/c the integral cannot be derivatized wrt both wfn and ham
-        if ham_deriv is not None:
-            return sum(self.ham.integrate_wfn_sd(self.wfn, sd, ham_deriv=ham_deriv))
-        return 0.0
+        return sum(
+            self.ham.integrate_wfn_sd(self.wfn, sd, wfn_deriv=wfn_deriv, ham_deriv=ham_deriv)
+        )
 
     def wrapped_integrate_sd_sd(self, sd1, sd2, deriv=None):
         r"""Wrap `integrate_sd_sd` to be derivatized wrt the parameters of the objective.

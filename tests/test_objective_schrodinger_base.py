@@ -43,6 +43,9 @@ def test_baseschrodinger_assign_param_selection():
     """Test BaseSchrodinger.assign_param_selection."""
     test = skip_init(disable_abstract(BaseSchrodinger))
 
+    test.assign_param_selection()
+    assert isinstance(test.param_selection, ParamMask)
+
     test.assign_param_selection(())
     assert isinstance(test.param_selection, ParamMask)
 
@@ -142,7 +145,7 @@ def test_baseschrodinger_wrapped_integrate_wfn_sd():
         np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
     )
     test = disable_abstract(BaseSchrodinger)(
-        wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])), (ParamContainer(3), True)]
+        wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])), (ham, np.array([0]))]
     )
     assert test.wrapped_integrate_wfn_sd(0b0101) == sum(ham.integrate_wfn_sd(wfn, 0b0101))
     assert test.wrapped_integrate_wfn_sd(0b0101, deriv=0) == sum(
@@ -154,8 +157,9 @@ def test_baseschrodinger_wrapped_integrate_wfn_sd():
     assert test.wrapped_integrate_wfn_sd(0b0101, deriv=2) == sum(
         ham.integrate_wfn_sd(wfn, 0b0101, wfn_deriv=5)
     )
-    # FIXME: no tests for ham_deriv b/c there are no hamiltonians with parameters
-    assert test.wrapped_integrate_wfn_sd(0b0101, deriv=3) == 0.0
+    assert test.wrapped_integrate_wfn_sd(0b0101, deriv=3) == sum(
+        ham.integrate_wfn_sd(wfn, 0b0101, ham_deriv=0)
+    )
 
 
 def test_baseschrodinger_wrapped_integrate_sd_sd():
@@ -166,14 +170,15 @@ def test_baseschrodinger_wrapped_integrate_sd_sd():
         np.arange(4, dtype=float).reshape(2, 2), np.arange(16, dtype=float).reshape(2, 2, 2, 2)
     )
     test = disable_abstract(BaseSchrodinger)(
-        wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])), (ParamContainer(3), True)]
+        wfn, ham, param_selection=[(wfn, np.array([0, 3, 5])), (ham, np.array([0]))]
     )
     assert test.wrapped_integrate_sd_sd(0b0101, 0b0101) == sum(ham.integrate_sd_sd(0b0101, 0b0101))
     assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=0) == 0.0
     assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=1) == 0.0
     assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=2) == 0.0
-    assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=3) == 0.0
-    # FIXME: no tests for derivatives wrt hamiltonian b/c there are no hamiltonians with parameters
+    assert test.wrapped_integrate_sd_sd(0b0101, 0b0101, deriv=3) == sum(
+        ham.integrate_sd_sd(0b0101, 0b0101, deriv=0)
+    )
 
 
 def test_load_cache():
@@ -193,7 +198,10 @@ def test_load_cache():
     # overwrite both _olp and _olp_deriv
     test.wfn = disable_abstract(
         BaseWavefunction,
-        dict_overwrite={"_olp": lambda self, sd: 1, "_olp_deriv": lambda self, sd, deriv: 1},
+        dict_overwrite={
+            "_olp": lambda self, sd: self.params[0],
+            "_olp_deriv": lambda self, sd, deriv: self.params[0],
+        },
     )(2, 4)
     test.wfn.params = np.arange(1)
 
@@ -216,6 +224,13 @@ def test_load_cache():
         test.load_cache([])
     with pytest.raises(ValueError):
         test.load_cache("20.1kb")
+
+    assert (test.wfn._olp(0b0011) == 0)
+    test.wfn.params[0] = -1
+    assert (test.wfn._olp(0b0011) == 0)
+    assert (test.wfn._olp_deriv(0b0011, 0) == -1)
+    test.wfn.params[0] = 0
+    assert (test.wfn._olp_deriv(0b0011, 0) == -1)
 
     # overwrite only _olp
     test.wfn = disable_abstract(BaseWavefunction, dict_overwrite={"_olp": lambda self, sd: 1})(2, 4)
