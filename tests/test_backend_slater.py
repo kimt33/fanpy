@@ -72,6 +72,8 @@ def test_spin_index():
     with pytest.raises(ValueError):
         slater.spin_index(-1, 4, "alpha")
     with pytest.raises(ValueError):
+        slater.spin_index(1, -4, "alpha")
+    with pytest.raises(ValueError):
         slater.spin_index(99, 4, "alpha")
     with pytest.raises(ValueError):
         slater.spin_index(1, 4, "generalized")

@@ -864,7 +864,7 @@ def sign_perm(jumbled_set, ordered_set=None, is_decreasing=True):
     sign = 1
     # for each ordered number
     for i in ordered_set:
-        for j in jumbled_set:
+        for j in jumbled_set:  # pragma: no branch
             # count the number of numbers that are greater than it
             if j > i:
                 sign *= -1
