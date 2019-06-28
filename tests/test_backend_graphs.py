@@ -60,6 +60,7 @@ def test_generate_biclique_pmatch():
     # bad input
     assert list(generate_biclique_pmatch([], [])) == [((), 1)]
     assert list(generate_biclique_pmatch([], [1, 2])) == [((), 1)]
+    assert list(generate_biclique_pmatch([1, 2], [2, 3, 4])) == [((), 1)]
     assert list(generate_biclique_pmatch([1, 2], [2, 3])) == [((), 1)]
 
     # 4 vertices
@@ -208,6 +209,27 @@ def test_unorderd_partition():
         [[2], [3], [1, 4]],
         [[2], [4], [1, 3]],
         [[3], [4], [1, 2]],
+    ]
+
+    # NOTE: following are weird behaviours due to input that does not follow the specified (in
+    # docstring) conventions
+    # collection of numbers is not ordered: note the missing partition
+    assert list(generate_unordered_partition([1, 2, 4, 3], [(2, 2)])) == [
+        [[1, 4], [2, 3]],
+        [[1, 3], [2, 4]],
+    ]
+    # bins can fit more than the provided collection of elements
+    assert list(generate_unordered_partition([1, 2, 3, 4], [(2, 1), (3, 1)])) == [
+        [[1, 2], [3, 4]],
+        [[1, 3], [2, 4]],
+        [[1, 4], [2, 3]],
+        [[1], [2, 3, 4]],
+        [[2, 3], [1, 4]],
+        [[2, 4], [1, 3]],
+        [[2], [1, 3, 4]],
+        [[3, 4], [1, 2]],
+        [[3], [1, 2, 4]],
+        [[4], [1, 2, 3]],
     ]
 
 

@@ -132,10 +132,12 @@ def generate_biclique_pmatch(indices_one, indices_two, ordered_set=None, is_decr
         # indices select the specific ordering
         cycles = list(reversed(range(1, n + 1)))
         # cycles keeps track of the number of swaps and the positions of elements that are swapped
-        yield tuple(zip(indices_one, (pool[i] for i in indices))), sign * orig_sign
+        yield (  # pragma: no branch
+            tuple(zip(indices_one, (pool[i] for i in indices))), sign * orig_sign
+        )
         # NOTE: to obtain the signature, the jumbld pair structure must be unzipped, then sorted
         #       from largest to smallest. orig_sign accounts for this transposition/permutation
-        while n:
+        while n:  # pragma: no branch
             for i in reversed(range(n)):
                 cycles[i] -= 1
                 if cycles[i] == 0:
@@ -153,7 +155,9 @@ def generate_biclique_pmatch(indices_one, indices_two, ordered_set=None, is_decr
                     # change sign because swapping any two elements with x elements in between will
                     # require x+(x+1)=2x+1 swaps
                     sign *= -1
-                    yield tuple(zip(indices_one, (pool[i] for i in indices))), sign * orig_sign
+                    yield (  # pragma: no branch
+                        tuple(zip(indices_one, (pool[i] for i in indices))), sign * orig_sign
+                    )
                     break
             else:
                 return
@@ -220,17 +224,20 @@ def generate_unordered_partition(collection, bin_size_num):
             if len(subset) == 0:
                 # element can go into the empty subset/bin
                 yield prev_partition[:ind_bin] + [subset + [last]] + prev_partition[ind_bin + 1 :]
-                # if there are more than empty bins of the same size
-                if bin_size_num[ind_size][1] > 1:
-                    # NOTE: If the subset/bin is empty, all subsequent subsets/bins of the same size
-                    #       must also be empty (because the bins are always filled from left to
-                    #       right)
-                    #       We can skip filling the bins of the same size because the bins of the
-                    #       same sizes are not distinguishable, i.e. unordered partition
-                    # skip to the next bin that has a different size
-                    ind_bin += bin_size_num[ind_size][1] - ind_bin_size - 1
-                    ind_size += 1
-                    ind_bin_size = -1
+                # NOTE: there cannot be any empty bins because an IndexError would be raised before
+                # this point otherwise. So the following if statement is not needed
+                # if bin_size_num[ind_size][1] > 1:
+
+                # NOTE: If the subset/bin is empty, all subsequent subsets/bins of the same size
+                #       must also be empty (because the bins are always filled from left to
+                #       right)
+                #       We can skip filling the bins of the same size because the bins of the
+                #       same sizes are not distinguishable, i.e. unordered partition
+                # skip to the next bin that has a different size
+                ind_bin += bin_size_num[ind_size][1] - ind_bin_size - 1
+                ind_size += 1
+                ind_bin_size = -1
+                # move onto next partition
                 continue
 
             # ensure that elements in each bin are ordered
