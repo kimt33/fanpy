@@ -289,7 +289,7 @@ class OneSidedEnergy(BaseSchrodinger):
         if isinstance(self.refwfn, CIWavefunction):
             ref_sds = self.refwfn.sd_vec
             ref_coeffs = self.refwfn.params
-        elif isinstance(self.refwfn, tuple):
+        else:
             ref_sds = self.refwfn
             ref_coeffs = np.array([get_overlap(i) for i in self.refwfn])
 
@@ -334,7 +334,7 @@ class OneSidedEnergy(BaseSchrodinger):
         if isinstance(self.refwfn, CIWavefunction):
             ref_sds = self.refwfn.sd_vec
             ref_coeffs = self.refwfn.params
-        elif isinstance(self.refwfn, tuple):
+        else:
             ref_sds = self.refwfn
             ref_coeffs = np.array([get_overlap(i) for i in self.refwfn])
 
