@@ -248,6 +248,11 @@ def test_system_objective():
             )
         assert np.allclose(objective[-1], norm_answer)
 
+        # computed energy, no constraints
+        test = SystemEquations(wfn, ham, eqn_weights=weights[:-1], refwfn=refwfn, constraints=[])
+        objective = test.objective(guess[:6])
+        assert len(objective) == wfn.nparams
+
         # variable energy
         test = SystemEquations(
             wfn, ham, energy=1.0, energy_type="variable", eqn_weights=weights, refwfn=refwfn
@@ -333,6 +338,11 @@ def test_system_jacobian():
                     ),
                 )
         assert np.allclose(jacobian[-1], norm_answer)
+
+        # computed energy, no normalization
+        test = SystemEquations(wfn, ham, eqn_weights=weights[:-1], refwfn=refwfn, constraints=[])
+        jacobian = test.jacobian(guess[:6])
+        assert jacobian.shape == (test.nproj, wfn.nparams)
 
         # variable energy
         test = SystemEquations(

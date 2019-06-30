@@ -412,9 +412,7 @@ class SystemEquations(BaseSchrodinger):
         integrate_wfn_sd = self.wrapped_integrate_wfn_sd
 
         # reference values
-        if self.energy_type in ["variable", "fixed"]:
-            energy = self.energy.params
-        elif self.energy_type == "compute":
+        if self.energy_type == "compute":
             # define reference
             if isinstance(self.refwfn, CIWavefunction):
                 ref_sds = self.refwfn.sd_vec
@@ -431,6 +429,8 @@ class SystemEquations(BaseSchrodinger):
             # )
             # energy = temp_obj.objective(self.params)
             self.energy.assign_params(energy)
+        else:
+            energy = self.energy.params
 
         # objective
         obj = np.empty(self.num_eqns)
@@ -439,7 +439,7 @@ class SystemEquations(BaseSchrodinger):
             [integrate_wfn_sd(i) for i in self.pspace]
         ) - energy * np.array([get_overlap(i) for i in self.pspace])
         # Add constraints
-        if self.nproj < self.num_eqns:
+        if self.constraints:
             obj[self.nproj :] = np.hstack([cons.objective(params) for cons in self.constraints])
         # weigh equations
         obj *= self.eqn_weights
@@ -517,16 +517,7 @@ class SystemEquations(BaseSchrodinger):
         d_norm += np.sum(ref_coeffs * d_ref_sds_olps, axis=0)
 
         # energy
-        if self.energy_type in ["variable", "fixed"]:
-            energy = self.energy.params
-            d_energy = np.array(
-                [
-                    self.param_selection.derivative_index(self.energy, i) is not None
-                    for i in range(params.size)
-                ],
-                dtype=float,
-            )
-        elif self.energy_type == "compute":
+        if self.energy_type == "compute":
             # norm
             norm = np.sum(ref_coeffs * ref_sds_olps)
             # integral <SD | H | Psi>
@@ -540,6 +531,15 @@ class SystemEquations(BaseSchrodinger):
             energy = ref_int / norm
             d_energy = (d_ref_int - d_norm * energy) / norm
             self.energy.assign_params(energy)
+        else:
+            energy = self.energy.params
+            d_energy = np.array(
+                [
+                    self.param_selection.derivative_index(self.energy, i) is not None
+                    for i in range(params.size)
+                ],
+                dtype=float,
+            )
 
         # reshape for broadcasting
         pspace = np.array(self.pspace)
@@ -554,7 +554,7 @@ class SystemEquations(BaseSchrodinger):
             [[get_overlap(i)] for i in pspace]
         )
         # Add constraints
-        if self.nproj < self.num_eqns:
+        if self.constraints:
             jac[self.nproj :] = np.vstack([cons.gradient(params) for cons in self.constraints])
         # weigh equations
         jac *= self.eqn_weights[:, np.newaxis]
