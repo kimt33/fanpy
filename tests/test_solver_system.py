@@ -64,6 +64,13 @@ def test_least_squares():
     assert np.allclose(objective.objective(wfn.params), 0)
     assert np.allclose((wfn.params[0] - 3) ** 2 * (wfn.params[1] - 2) ** 2, 1)
 
+    # user specified
+    results = system.least_squares(objective, xtol=1e-9, ftol=1e-9, gtol=1e-9)
+    assert results["success"]
+    assert np.allclose(results["energy"], 2)
+    assert np.allclose(objective.objective(wfn.params), 0, atol=1e-6)
+    assert np.allclose((wfn.params[0] - 3) ** 2 * (wfn.params[1] - 2) ** 2, 1)
+
     with pytest.raises(TypeError):
         system.least_squares(OneSidedEnergy(wfn, ham))
 
@@ -82,6 +89,13 @@ def test_root():
     assert np.allclose(results["energy"], 2)
     assert np.allclose(objective.objective(wfn.params), 0)
 
+    # user specified
+    results = system.root(objective, method="broyden1")
+    assert results["success"]
+    assert np.allclose(results["energy"], 2)
+    assert np.allclose(objective.objective(wfn.params), 0)
+
+    # check types
     with pytest.raises(TypeError):
         system.root(OneSidedEnergy(wfn, ham))
     with pytest.raises(ValueError):
