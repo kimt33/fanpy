@@ -1,6 +1,4 @@
 """Test wfns.solver.equation."""
-import os
-
 import numpy as np
 import pytest
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
@@ -124,6 +122,7 @@ def test_minimize():
     # default optimization without gradient
     class NoGradOneSidedEnergy(OneSidedEnergy):
         """OneSidedEnergy that hides the gradiennt method."""
+
         def __getattribute__(self, name):
             """Return output of dir without the gradient method.
 
