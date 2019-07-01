@@ -27,32 +27,24 @@ def test_brute():
     test_ham = TempChemicalHamiltonian(
         np.ones((2, 2), dtype=float), np.ones((2, 2, 2, 2), dtype=float)
     )
-    # check type
+    # check type of wavefunction
     with pytest.raises(TypeError):
-        ci.brute(None, test_ham, 0)
+        ci.brute(None, test_ham)
+    # check type of hamiltonian
     with pytest.raises(TypeError):
-        ci.brute(test_wfn, None, 0)
-
-    test_ham = TempChemicalHamiltonian(
-        np.ones((2, 2), dtype=complex), np.ones((2, 2, 2, 2), dtype=complex)
-    )
-    with pytest.raises(ValueError):
-        ci.brute(test_wfn, test_ham, 0)
-    test_ham = TempChemicalHamiltonian(
-        np.ones((3, 3), dtype=complex), np.ones((3, 3, 3, 3), dtype=complex)
-    )
-    with pytest.raises(ValueError):
-        ci.brute(test_wfn, test_ham, 0)
-
-    test_wfn = CIWavefunction(2, 4, sd_vec=[0b0011, 0b1100])
-    test_ham = TempChemicalHamiltonian(
-        np.ones((2, 2), dtype=float), np.ones((2, 2, 2, 2), dtype=float)
-    )
+        ci.brute(test_wfn, None)
+    # check type of save_file
     with pytest.raises(TypeError):
         ci.brute(test_wfn, test_ham, None)
     with pytest.raises(TypeError):
         ci.brute(test_wfn, test_ham, -1)
 
+    # check for number of spin orbitals
+    test_ham = TempChemicalHamiltonian(np.ones((3, 3)), np.ones((3, 3, 3, 3)))
+    with pytest.raises(ValueError):
+        ci.brute(test_wfn, test_ham)
+
+    test_ham = TempChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
     # 0 = det [[1, 3]
     #          [3, 8]]
     # 0 = (1-lambda)(8-lambda) - 3*3
@@ -70,3 +62,15 @@ def test_brute():
     assert np.allclose(energies[1], (9 + 85 ** 0.5) / 2)
     matrix = np.array([[1 - energies[1], 3], [3, 8 - energies[1]]])
     assert np.allclose(matrix.dot(coeffs[:, 1]), np.zeros(2))
+
+
+def test_brute_savefile(tmp_path):
+    """Test that the results are saved in wfn.solver.ci.brute."""
+    test_wfn = CIWavefunction(2, 4, sd_vec=[0b0011, 0b1100])
+    test_ham = TempChemicalHamiltonian(
+        np.ones((2, 2), dtype=float), np.ones((2, 2, 2, 2), dtype=float)
+    )
+    output = ci.brute(test_wfn, test_ham, save_file=str(tmp_path / "test.npy"))
+    test = np.load(tmp_path / "test.npy")
+    assert np.allclose(test[0, :], output["eigval"])
+    assert np.allclose(test[1:, :], output["eigvec"])

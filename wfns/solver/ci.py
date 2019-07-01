@@ -16,8 +16,8 @@ def brute(wfn, ham, save_file=""):
         Hamiltonian.
     save_file : str
         File to which the eigenvectors and the eigenvalue will be saved.
-        File is saved as a numpy array where the first row corresponds to the energies and the
-        subsequent rows correspond to the coefficients for these energies.
+        File is saved as a two-dimensional numpy array where the first row corresponds to the
+        energies and the subsequent rows correspond to the coefficients for these energies.
 
     Returns
     -------
@@ -51,8 +51,6 @@ def brute(wfn, ham, save_file=""):
         raise TypeError("Given wavefunction is not an instance of BaseWavefunction (or its child).")
     if not isinstance(ham, BaseHamiltonian):
         raise TypeError("Given Hamiltonian is not an instance of BaseHamiltonian (or its child).")
-    if wfn.dtype != ham.dtype:
-        raise ValueError("Wavefunction and Hamiltonian do not have the same data type.")
     if wfn.nspin != ham.nspin:
         raise ValueError(
             "Wavefunction and Hamiltonian do not have the same number of spin " "orbitals"
@@ -72,7 +70,7 @@ def brute(wfn, ham, save_file=""):
     del ci_matrix
 
     if save_file != "":
-        np.save(save_file, np.vstack(eigval, eigvec))
+        np.save(save_file, np.vstack([eigval, eigvec]))
 
     output = {
         "success": True,
