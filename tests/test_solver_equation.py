@@ -52,19 +52,9 @@ class TempBaseWavefunction(BaseWavefunction):
         return 10 * (np.random.rand(2) - 0.5)
 
 
-def check_cma():
-    """Check if cma module is available."""
-    try:
-        import cma  # noqa: F401
-    except ModuleNotFoundError:
-        return False
-    else:
-        return True
-
-
-@pytest.mark.skipif(not check_cma(), reason="The module `cma` is unavailable.")
-def test_cma():
+def test_cma(tmp_path):
     """Test wnfs.solver.equation.cma."""
+    pytest.importorskip("cma")
     wfn = TempBaseWavefunction()
     wfn.assign_nelec(2)
     wfn.assign_nspin(4)
@@ -86,6 +76,8 @@ def test_cma():
         "Following termination conditions are satisfied: tolfun: 1e-11, tolfunhist: 1e-12.",
     ]
 
+    results["successs"] = False
+
     with pytest.raises(TypeError):
         equation.cma(lambda x, y: (x - 3) * (y - 2) + x ** 3 + y ** 2)
     with pytest.raises(ValueError):
@@ -93,10 +85,19 @@ def test_cma():
     with pytest.raises(ValueError):
         equation.cma(OneSidedEnergy(wfn, ham, param_selection=[[wfn, np.array([0])]]))
 
-    results = equation.cma(OneSidedEnergy(wfn, ham, refwfn=[0b0011, 0b1100]), save_file="temp.npy")
-    test = np.load("temp.npy")
+    path = str(tmp_path / "temp.npy")
+    results = equation.cma(OneSidedEnergy(wfn, ham, refwfn=[0b0011, 0b1100]), save_file=path)
+    test = np.load(path)
     assert np.allclose(results["params"], test)
-    os.remove("temp.npy")
+
+    # user specified
+    results = equation.cma(
+        OneSidedEnergy(wfn, ham, refwfn=[0b0011, 0b1100]), sigma0=0.2, options={"tolfun": 1e-4}
+    )
+    assert results["success"]
+    assert np.allclose(results["energy"], 2)
+    assert np.allclose(results["function"], 2)
+    assert results["message"] == "Following termination conditions are satisfied: tolfun: 0.0001."
 
 
 def test_minimize():
@@ -107,6 +108,7 @@ def test_minimize():
     wfn.assign_params()
     ham = RestrictedChemicalHamiltonian(np.ones((2, 2)), np.ones((2, 2, 2, 2)))
 
+    # default optimization with gradient
     results = equation.minimize(OneSidedEnergy(wfn, ham, refwfn=[0b0011, 0b1100]))
     assert results["success"]
     assert np.allclose(results["energy"], 2)
@@ -118,6 +120,34 @@ def test_minimize():
     assert results["success"]
     assert np.allclose(results["energy"], 2)
     assert np.allclose(results["function"], 0, atol=1e-7)
+
+    # default optimization without gradient
+    class NoGradOneSidedEnergy(OneSidedEnergy):
+        """OneSidedEnergy that hides the gradiennt method."""
+        def __getattribute__(self, name):
+            """Return output of dir without the gradient method.
+
+            Since hasattr uses __getattribute__ method to check if the given attribute exists, we
+            can trick hasattr into thinking that the method gradient does not exist by overwriting
+            the __getattribute__ behaviour.
+
+            """
+            if name == "gradient":
+                raise AttributeError
+            return super().__getattribute__(name)
+
+    objective = NoGradOneSidedEnergy(wfn, ham, refwfn=[0b0011, 0b1100])
+    results = equation.minimize(objective)
+    assert results["success"]
+    assert np.allclose(results["energy"], 2)
+    assert np.allclose(results["function"], 2)
+
+    # user specified optimization
+    objective = OneSidedEnergy(wfn, ham, refwfn=[0b0011, 0b1100])
+    results = equation.minimize(objective, method="L-BFGS-B")
+    assert results["success"]
+    assert np.allclose(results["energy"], 2)
+    assert np.allclose(results["function"], 2)
 
     with pytest.raises(TypeError):
         equation.minimize(lambda x, y: (x - 3) * (y - 2) + x ** 3 + y ** 2)

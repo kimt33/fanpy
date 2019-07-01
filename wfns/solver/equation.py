@@ -89,15 +89,15 @@ def cma(objective, save_file="", **kwargs):
 
     if isinstance(objective, LeastSquaresEquations):
         output["energy"] = objective.energy.params
-    elif isinstance(objective, (OneSidedEnergy, TwoSidedEnergy)):
+    elif isinstance(objective, (OneSidedEnergy, TwoSidedEnergy)):  # pragma: no branch
         output["energy"] = results[1]
 
-    if output["success"]:
+    if output["success"]:  # pragma: no branch
         output["message"] = "Following termination conditions are satisfied:" + "".join(
             " {0}: {1},".format(key, val) for key, val in results[-3].items()
         )
         output["message"] = output["message"][:-1] + "."
-    else:
+    else:  # pragma: no cover
         output["message"] = "Optimization did not succeed."
 
     output["internal"] = results
@@ -168,7 +168,7 @@ def minimize(objective, save_file="", **kwargs):
     output["function"] = output["internal"].fun
     if isinstance(objective, LeastSquaresEquations):
         output["energy"] = objective.energy.params
-    elif isinstance(objective, (OneSidedEnergy, TwoSidedEnergy)):
+    elif isinstance(objective, (OneSidedEnergy, TwoSidedEnergy)):  # pragma: no branch
         output["energy"] = output["function"]
 
     return output
