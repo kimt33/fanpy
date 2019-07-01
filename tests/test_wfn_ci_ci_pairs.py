@@ -2,6 +2,7 @@
 import numpy as np
 import pytest
 from utils import skip_init
+from wfns.backend.sd_list import sd_list
 from wfns.wfn.ci.ci_pairs import CIPairs
 
 
@@ -39,6 +40,13 @@ def test_to_ap1rog():
     test.assign_params(params[:, 2].flatten())
     ap1rog = test.to_ap1rog()
     assert np.allclose(ap1rog.params, np.array([4 / 7, 1 / 7]))
+
+    test = CIPairs(10, 20)
+    test.assign_params(np.random.rand(*test.params_shape))
+    test.params[0] = 1
+    ap1rog = test.to_ap1rog()
+    for i in sd_list(6, 6, seniority=0, exc_orders=[2]):
+        assert np.allclose(test.get_overlap(i), ap1rog.get_overlap(i))
 
 
 @pytest.mark.skip(reason="No reference to compare against.")

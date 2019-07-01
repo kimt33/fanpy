@@ -115,7 +115,7 @@ class CIPairs(DOCI):
 
         """
         # select Slater determinant with largest contributor as the reference Slater determinant
-        ref_sd_ind = np.argsort(np.abs(self.params))[-1]
+        ref_sd_ind = np.argmax(np.abs(self.params))
         ref_sd = self.sd_vec[ref_sd_ind]
         spatial_ref_sd, _ = slater.split_spin(ref_sd, self.nspatial)
         # use ap1rog normalization scheme
@@ -131,14 +131,12 @@ class CIPairs(DOCI):
             for vir_ind in slater.vir_indices(spatial_ref_sd, self.nspatial):
                 # excite slater determinant
                 sd_exc = slater.excite(ref_sd, occ_ind, vir_ind)
+                # FIXME: hardcoded Slater determinant structure
                 sd_exc = slater.excite(sd_exc, occ_ind + self.nspatial, vir_ind + self.nspatial)
                 # set geminal coefficient (`a` decremented b/c first npair columns are removed)
                 row_ind = ap1rog.dict_reforbpair_ind[(occ_ind, occ_ind + self.nspatial)]
                 col_ind = ap1rog.dict_orbpair_ind[(vir_ind, vir_ind + self.nspatial)]
-                try:
-                    gem_coeffs[row_ind, col_ind] = ci_params[self.dict_sd_index[sd_exc]]
-                except KeyError:
-                    gem_coeffs[row_ind, col_ind] = 0.0
+                gem_coeffs[row_ind, col_ind] = ci_params[self.dict_sd_index[sd_exc]]
         ap1rog.assign_params(gem_coeffs)
 
         return ap1rog
