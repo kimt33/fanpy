@@ -386,8 +386,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
                 self.orbtype == "unrestricted"
                 and (
                     (transform_ind == 0 and (slater.occ(alpha_sd, row_removed)))
-                    or
-                    (transform_ind == 1 and (slater.occ(beta_sd, row_removed)))
+                    or (transform_ind == 1 and (slater.occ(beta_sd, row_removed)))
                 )
             )
         ):
