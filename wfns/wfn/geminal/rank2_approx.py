@@ -213,7 +213,9 @@ class RankTwoApprox:
             for col_to_remove in col_inds:
                 col_inds_trunc = col_inds[col_inds != col_to_remove]
                 # this will never happen (but just in case)
-                if row_inds_trunc.size == row_inds.size or col_inds_trunc.size == col_inds.size:
+                if (
+                    row_inds_trunc.size == row_inds.size or col_inds_trunc.size == col_inds.size
+                ):  # pragma: no cover
                     continue
                 # derivative of matrix element c_ij wrt lambda_i
                 der_cij_rowi = (
@@ -469,6 +471,11 @@ def full_to_rank2(params, rmsd=0.1, method="least squares"):
         # linearly combine right null vectors
         lin_comb = np.linalg.lstsq(vh[indices].T, b)[0]
         rank2_params = vh[indices].T.dot(lin_comb).flatten()
+    else:
+        raise ValueError(
+            "Method for converting the full rank matrix to rank 2 cauchy matrix is 'least squares' "
+            "and 'svd'"
+        )
 
     # Check
     lambdas = rank2_params[:ngem, np.newaxis]

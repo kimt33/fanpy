@@ -80,6 +80,12 @@ def test_rank2_geminal_params_from_full():
         fullrank_params, test[14:24] / (test[:4, np.newaxis] - test[4:14]), atol=0.1, rtol=0
     )
 
+    # FIXME: sometimes fails for some reason
+    test = full_to_rank2(fullrank_params, method="svd")
+    assert np.allclose(
+        fullrank_params, test[14:24] / (test[:4, np.newaxis] - test[4:14]), atol=0.1, rtol=0
+    )
+
     fullrank_params = np.array(
         [
             [
@@ -104,6 +110,10 @@ def test_rank2_geminal_params_from_full():
     assert np.allclose(
         fullrank_params, test[8:14] / (test[:2, np.newaxis] - test[2:8]), atol=0.1, rtol=0
     )
+    with pytest.raises(ValueError):
+        full_to_rank2(fullrank_params, method="svd")
+    with pytest.raises(ValueError):
+        full_to_rank2(fullrank_params, method="dslkfjsdlkfj")
 
 
 @pytest.mark.skip(reason="Test does not always pass (depends on random noise).")
@@ -473,3 +483,6 @@ def test_rank2_geminal_get_overlap():
         ),
     )
     assert test.get_overlap(0b00110011, deriv=8) == 0
+    # bad value with derivative
+    assert test.get_overlap(0b00110011, deriv=0.0) is None
+    assert test.get_overlap(0b00110011, deriv=test.nparams) == 0
