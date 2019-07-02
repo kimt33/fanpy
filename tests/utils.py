@@ -90,6 +90,7 @@ def find_datafile(file_name):
     return os.path.join(os.path.dirname(__file__), file_name)
 
 
+# FIXME: raises index error when function is univariate
 def partial_deriv_finite_diff(func, x, order, epsilon=1e-8, num_points=1):
     """Return the first order partial derivative of the given function at the given value.
 

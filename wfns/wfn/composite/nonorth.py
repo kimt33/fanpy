@@ -7,6 +7,7 @@ from wfns.wfn.composite.base_one import BaseCompositeOneWavefunction
 
 
 # FIXME: needs refactoring
+# FIXME: needs to be split into the restricted, unrestricted, and generalized.
 class NonorthWavefunction(BaseCompositeOneWavefunction):
     r"""Wavefunction with nonorthonormal orbitals expressed with respect to orthonormal orbitals.
 
@@ -335,6 +336,7 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
         return output
 
     # FIXME: too many branches, too many statements
+    # FIXME: doesn't work for restricted
     def _olp_deriv(self, sd, deriv):
         """Calculate the derivative of the overlap with the Slater determinant.
 
@@ -375,7 +377,20 @@ class NonorthWavefunction(BaseCompositeOneWavefunction):
             return output
 
         alpha_sd, beta_sd = slater.split_spin(sd, self.nspatial)
-        if not (slater.occ(alpha_sd, row_removed) or slater.occ(beta_sd, row_removed)):
+        if not (
+            (
+                self.orbtype == "restricted"
+                and (slater.occ(alpha_sd, row_removed) or slater.occ(beta_sd, row_removed))
+            )
+            or (
+                self.orbtype == "unrestricted"
+                and (
+                    (transform_ind == 0 and (slater.occ(alpha_sd, row_removed)))
+                    or
+                    (transform_ind == 1 and (slater.occ(beta_sd, row_removed)))
+                )
+            )
+        ):
             return 0.0
         # FIXME/TODO: need to add signature for derivative
         if (

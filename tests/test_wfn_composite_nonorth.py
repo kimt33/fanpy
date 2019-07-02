@@ -1,7 +1,7 @@
 """Test wfns.wavefunction.composite.nonorth."""
 import numpy as np
 import pytest
-from utils import find_datafile, skip_init
+from utils import find_datafile, partial_deriv_finite_diff, skip_init
 from wfns.backend.sd_list import sd_list
 from wfns.ham.restricted_chemical import RestrictedChemicalHamiltonian
 from wfns.wfn.base import BaseWavefunction
@@ -436,6 +436,30 @@ def test_nonorth_olp_deriv_generalized():
     )
 
 
+def test_nonorth_olp_deriv_generalized_finite_diff():
+    """Test NonorthWavefunction._olp_deriv for generalized orbitals using finite difference."""
+    wfn = CIWavefunction(5, 8)
+    wfn.assign_params(np.random.rand(*wfn.params_shape))
+    test = NonorthWavefunction(5, 8, wfn)
+    init_params = np.random.rand(8, 8)
+
+    for sd in sd_list(5, 4):
+
+        def func(x):
+            test.assign_params(init_params)
+            test.params[0][0, 0:2] = x
+            return test._olp(sd)
+
+        for i in range(2):
+            order = np.zeros(2)
+            order[i] = 1
+            test.assign_params(init_params)
+            assert np.isclose(
+                test._olp_deriv(sd, i),
+                partial_deriv_finite_diff(func, test.params[0].flatten()[:2], order),
+            )
+
+
 def test_nonorth_olp_deriv_unrestricted():
     """Test NonorthWavefunction._olp_deriv for unrestricted orbitals."""
     test = skip_init(NonorthWavefunction)
@@ -473,6 +497,30 @@ def test_nonorth_olp_deriv_unrestricted():
 
     # check trivial
     assert test._olp_deriv(0b1100, 0) == 0
+
+
+def test_nonorth_olp_deriv_unrestricted_finite_diff():
+    """Test NonorthWavefunction._olp_deriv for unrestricted orbitals using finite difference."""
+    wfn = CIWavefunction(5, 8)
+    wfn.assign_params(np.random.rand(*wfn.params_shape))
+    test = NonorthWavefunction(5, 8, wfn)
+    init_params = (np.random.rand(4, 4), np.random.rand(4, 4))
+
+    for sd in sd_list(5, 4):
+
+        def func(x):
+            test.assign_params(init_params)
+            test.params[0][0, 0:2] = x
+            return test._olp(sd)
+
+        for i in range(2):
+            order = np.zeros(2)
+            order[i] = 1
+            test.assign_params(init_params)
+            assert np.isclose(
+                test._olp_deriv(sd, i),
+                partial_deriv_finite_diff(func, test.params[0].flatten()[:2], order),
+            )
 
 
 def test_nonorth_olp_deriv_restricted():
@@ -515,6 +563,31 @@ def test_nonorth_olp_deriv_restricted():
     assert test._olp_deriv(0b1010, 0) == 0
     assert test._olp_deriv(0b1111, 0) == 0
     assert test._olp_deriv(0b1111, 2) == 0
+
+
+@pytest.mark.xfail
+def test_nonorth_olp_deriv_restricted_finite_diff():
+    """Test NonorthWavefunction._olp_deriv for restricted orbitals using finite difference."""
+    wfn = CIWavefunction(5, 8)
+    wfn.assign_params(np.random.rand(*wfn.params_shape))
+    test = NonorthWavefunction(5, 8, wfn)
+    init_params = np.random.rand(4, 4)
+
+    for sd in sd_list(5, 4):
+
+        def func(x):
+            test.assign_params(init_params)
+            test.params[0][0, 0:2] = x
+            return test._olp(sd)
+
+        for i in range(2):
+            order = np.zeros(2)
+            order[i] = 1
+            test.assign_params(init_params)
+            assert np.isclose(
+                test._olp_deriv(sd, i),
+                partial_deriv_finite_diff(func, test.params[0].flatten()[:2], order),
+            )
 
 
 def test_nonorth_get_overlap():
