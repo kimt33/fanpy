@@ -49,6 +49,22 @@ def test_apig_generate_possible_orbpairs():
     assert (0, 5) in possible_orbpairs[0][0]
     assert (2, 7) in possible_orbpairs[0][0]
     assert (4, 9) in possible_orbpairs[0][0]
+
+    orbpairs = list(test.generate_possible_orbpairs([0, 2, 5, 7, 8, 9]))
+    assert orbpairs == [([], 1)]
+    orbpairs = list(test.generate_possible_orbpairs([0, 2, 3, 4, 7, 11]))
+    assert orbpairs == [([], 1)]
+
+    # NOTE: no check for out of range indices
+    orbpairs = list(test.generate_possible_orbpairs([0, 2, 5, 7, 11, 13]))
+    assert orbpairs == [([], 1)]
+    orbpairs = list(test.generate_possible_orbpairs([-1, 2, 5, 7, 8, 9]))
+    assert orbpairs == [([], 1)]
+
+    # NOTE: orbitals are selected using only the alpha parts
+    orbpairs = list(test.generate_possible_orbpairs([0, 5, 2, 7, 4, 11]))
+    assert orbpairs == [(((0, 5), (2, 7), (4, 9)), 1)]
+
     with pytest.raises(ValueError):
         next(test.generate_possible_orbpairs([0, 5, 2, 7]))
 
