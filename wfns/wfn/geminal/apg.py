@@ -1,6 +1,7 @@
 """Antisymmeterized Product of Geminals (APG) Wavefunction."""
 from wfns.backend.graphs import generate_complete_pmatch
 from wfns.wfn.geminal.base import BaseGeminal
+from wfns.wfn.geminal.cext import get_col_inds
 
 
 class APG(BaseGeminal):
@@ -118,7 +119,7 @@ class APG(BaseGeminal):
                 "possible orbital pairs will be used."
             )
         orbpairs = tuple((i, j) for i in range(self.nspin) for j in range(i + 1, self.nspin))
-        self.dict_orbpair_ind = {i: orbpair for i, orbpair in enumerate(orbpairs)}
+        self.dict_orbpair_ind = {orbpair: i for i, orbpair in enumerate(orbpairs)}
         self.dict_ind_orbpair = {i: orbpair for orbpair, i in self.dict_orbpair_ind.items()}
 
     def get_col_ind(self, orbpair):
@@ -126,7 +127,7 @@ class APG(BaseGeminal):
 
         Parameters
         ----------
-        orbpair : 2-tuple of int
+        orbpair : 2-tuple of int, np.array(2, P)
             Indices of the orbital pairs that will be used to construct each geminal.
             Default is all possible orbital pairs.
 
@@ -142,14 +143,19 @@ class APG(BaseGeminal):
 
         """
         i, j = orbpair
-        if i > j:
-            i, j = j, i
-        if not 0 <= i < j < self.nspin:
-            raise ValueError(
-                "Given orbital pair, {0}, is not included in the " "wavefunction.".format(orbpair)
-            )
+        # if i > j:
+        #     i, j = j, i
+        # if not 0 <= i < j < self.nspin:
+        #     raise ValueError(
+        #         "Given orbital pair, {0}, is not included in the " "wavefunction.".format(orbpair)
+        #     )
         # col_ind = (iK - i(i+1)/2) + (j - i)
-        return int(self.nspin * i - i * (i + 1) / 2 + (j - i - 1))
+        return self.nspin * i - i * (i + 1) // 2 + (j - i - 1)
+
+    def get_col_inds(self, orbpairs):
+        # i, j = orbpairs.T
+        # return self.nspin * i - i * (i + 1) // 2 + (j - i - 1)
+        return get_col_inds(orbpairs, self.nspin)
 
     def get_orbpair(self, col_ind):
         """Get the orbital pair that corresponds to the given column index.

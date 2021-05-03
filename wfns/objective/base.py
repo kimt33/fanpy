@@ -101,7 +101,40 @@ class BaseObjective(abc.ABC):
 
         """
         if self.tmpfile != "":
-            np.save(self.tmpfile, self.param_selection.all_params)
+            # np.save(self.tmpfile, self.param_selection.all_params)
+            header, ext = os.path.splitext(self.tmpfile)
+            try:
+                np.save('{}_wfn{}'.format(header, ext), self.wfn.params)
+            except (OSError, AttributeError):
+                pass
+            try:
+                np.save('{}_ham{}'.format(header, ext), self.ham.params)
+            except (OSError, AttributeError):
+                pass
+            try:
+                np.save('{}_ham_prev{}'.format(header, ext), self.ham._prev_params)
+            except (OSError, AttributeError):
+                pass
+            try:
+                np.save('{}_ham_um{}'.format(header, ext), self.ham._prev_unitary)
+            except (OSError, AttributeError):
+                pass
+            try:
+                np.save(header + '_pspace' + ext, self.pspace)
+            except (OSError, AttributeError):
+                pass
+            try:
+                np.save(header + '_refwfn' + ext, self.refwfn)
+            except (OSError, AttributeError):
+                pass
+            try:
+                np.save(header + '_pspace_norm' + ext, self.wfn.pspace_norm)
+            except (OSError, AttributeError):
+                pass
+            try:
+                np.save(header + '_eqn_weights' + ext, self.eqn_weights)
+            except (OSError, AttributeError):
+                pass
 
     def assign_param_selection(self, param_selection=None):
         """Select parameters that will be active in the objective.

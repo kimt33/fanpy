@@ -9,6 +9,9 @@ https://github.com/pypa/sampleproject
 from os import path
 
 from setuptools import find_packages, setup
+from setuptools.extension import Extension
+from Cython.Build import cythonize
+import numpy
 
 here = path.abspath(path.dirname(__file__))
 
@@ -96,4 +99,53 @@ setup(
         "Organization": "https://github.com/quantumelephant/",
         "Source": "https://github.com/theochem/gbasis/",
     },
+    ext_modules= cythonize(
+            [
+        Extension(
+            "wfns.objective.schrodinger.cext",
+            ["wfns/objective/schrodinger/cext.pyx"],
+            include_dirs=[numpy.get_include()],
+        ),
+        Extension(
+            "wfns.wfn.geminal.cext",
+            ["wfns/wfn/geminal/cext.pyx"],
+            include_dirs=[numpy.get_include()],
+        ),
+        Extension(
+            "wfns.upgrades.cext_apg",
+            ["wfns/upgrades/cext_apg.pyx"],
+            include_dirs=[numpy.get_include()],
+        ),
+        Extension(
+            "wfns.upgrades.cext_sign",
+            ["wfns/upgrades/cext_sign.pyx"],
+            include_dirs=[numpy.get_include()],
+        ),
+        Extension(
+            "wfns.upgrades.cext_objective",
+            ["wfns/upgrades/cext_objective.pyx"],
+            include_dirs=[numpy.get_include()],
+        ),
+        Extension(
+            "wfns.upgrades.cext_vqmc",
+            ["wfns/upgrades/cext_vqmc.pyx"],
+            include_dirs=[numpy.get_include()],
+        ),
+        Extension(
+            "wfns.upgrades.cext_apg_parallel",
+            ["wfns/upgrades/cext_apg_parallel.pyx"],
+            #extra_compile_args=['-fopenmp'],
+            #extra_link_args=['-fopenmp'],
+            include_dirs=[numpy.get_include()],
+        ),
+        Extension(
+            "wfns.upgrades.cext_apg_parallel2",
+            ["wfns/upgrades/cext_apg_parallel2.pyx"],
+            #extra_compile_args=['-fopenmp'],
+            #extra_link_args=['-fopenmp'],
+            include_dirs=[numpy.get_include()],
+        ),
+        ]
+    ),
+    zip_safe=False,
 )

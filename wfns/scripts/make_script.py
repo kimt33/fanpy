@@ -1,4 +1,5 @@
 """Code generating script."""
+import os
 import textwrap
 
 from wfns.scripts.utils import check_inputs, parser, parser_add_arguments
@@ -30,6 +31,8 @@ def make_script(
     save_chk=None,
     filename=None,
     memory=None,
+    ncores=1,
+    constraint=None,
 ):
     """Make a script for running calculations.
 
@@ -149,6 +152,7 @@ def make_script(
         wfn_kwargs=wfn_kwargs,
         ham_noise=ham_noise,
         wfn_noise=wfn_noise,
+        ncores=ncores,
     )
 
     imports = ["numpy as np", "os"]
@@ -163,6 +167,8 @@ def make_script(
     elif wfn_type == "doci":
         from_imports.append(("wfns.wfn.ci.doci", "DOCI"))
         wfn_name = "DOCI"
+        if wfn_kwargs is None:
+            wfn_kwargs = ""
     elif wfn_type == "mps":
         from_imports.append(("wfns.wfn.network.mps", "MatrixProductState"))
         wfn_name = "MatrixProductState"
@@ -198,6 +204,41 @@ def make_script(
         wfn_name = "APG"
         if wfn_kwargs is None:
             wfn_kwargs = "ngem=None"
+    elif wfn_type == "apg2":
+        from_imports.append(("wfns.wfn.geminal.apg2", "APG2"))
+        wfn_name = "APG2"
+        if wfn_kwargs is None:
+            wfn_kwargs = "tol=1e-4"
+    elif wfn_type == "apg3":
+        from_imports.append(("wfns.wfn.geminal.apg3", "APG3"))
+        wfn_name = "APG3"
+        if wfn_kwargs is None:
+            wfn_kwargs = "tol=1e-4, num_matchings=1"
+    elif wfn_type == "apg4":
+        from_imports.append(("wfns.wfn.geminal.apg4", "APG4"))
+        wfn_name = "APG4"
+        if wfn_kwargs is None:
+            wfn_kwargs = "tol=1e-4, num_matchings=2"
+    elif wfn_type == "apg5":
+        from_imports.append(("wfns.wfn.geminal.apg5", "APG5"))
+        wfn_name = "APG5"
+        if wfn_kwargs is None:
+            wfn_kwargs = "tol=1e-4, num_matchings=2"
+    elif wfn_type == "apg6":
+        from_imports.append(("wfns.wfn.geminal.apg6", "APG6"))
+        wfn_name = "APG6"
+        if wfn_kwargs is None:
+            wfn_kwargs = "tol=1e-4, num_matchings=2"
+    elif wfn_type == "apg7":
+        from_imports.append(("wfns.wfn.geminal.apg7", "APG7"))
+        wfn_name = "APG7"
+        if wfn_kwargs is None:
+            wfn_kwargs = "tol=1e-4"
+    elif wfn_type == "network":
+        from_imports.append(("wfns.upgrades.numpy_network", "NumpyNetwork"))
+        wfn_name = "NumpyNetwork"
+        if wfn_kwargs is None:
+            wfn_kwargs = "num_layers=2"
 
     if wfn_name == "DOCI":
         from_imports.append(("wfns.ham.senzero", "SeniorityZeroHamiltonian"))
@@ -208,15 +249,29 @@ def make_script(
 
     from_imports.append(("wfns.backend.sd_list", "sd_list"))
 
-    if objective == "system":
+    if objective in ["system", "system_qmc"]:
         from_imports.append(("wfns.objective.schrodinger.system_nonlinear", "SystemEquations"))
     elif objective == "least_squares":
         from_imports.append(("wfns.objective.schrodinger.least_squares", "LeastSquaresEquations"))
     elif objective == "variational":
         from_imports.append(("wfns.objective.schrodinger.twosided_energy", "TwoSidedEnergy"))
+    elif objective in ["one_energy", 'one_energy_qmc']:
+        from_imports.append(("wfns.objective.schrodinger.onesided_energy", "OneSidedEnergy"))
+    elif objective == "one_energy_system":
+        from_imports.append(("wfns.upgrades.onesided_energy_system", "OneSidedEnergySystem"))
+    elif objective == "vqmc":
+        from_imports.append(("wfns.upgrades.vqmc_orbs", "VariationalQuantumMonteCarlo"))
+
+    if constraint == 'norm':
+        from_imports.append(("wfns.objective.constraints.norm", "NormConstraint"))
+    elif constraint == 'energy':
+        from_imports.append(("wfns.objective.constraints.energy", "EnergyConstraint"))
 
     if solver == "cma":
-        from_imports.append(("wfns.solver.equation", "cma"))
+        if objective not in  ['vqmc', 'one_energy_qmc']:
+            from_imports.append(("wfns.solver.equation", "cma"))
+        else:
+            from_imports.append(("wfns.upgrades.cma_fanpy", "cma"))
         solver_name = "cma"
         if solver_kwargs is None:
             solver_kwargs = (
@@ -226,20 +281,21 @@ def make_script(
     elif solver == "diag":
         from_imports.append(("wfns.solver.ci", "brute"))
         solver_name = "brute"
-    elif solver == "minimize":
-        from_imports.append(("wfns.solver.equation", "minimize"))
-        solver_name = "minimize"
-        if solver_kwargs is None:
-            solver_kwargs = "method='BFGS', jac=objective.gradient, options={'gtol': 1e-8}"
-    elif solver == "least_squares":
-        from_imports.append(("wfns.solver.system", "least_squares"))
-        solver_name = "least_squares"
-        if solver_kwargs is None:
-            solver_kwargs = (
-                "xtol=1.0e-15, ftol=1.0e-15, gtol=1.0e-15, "
-                "max_nfev=1000*objective.params.size, jac=objective.jacobian"
-            )
+    elif solver in "minimize":
+        if objective in ['vqmc', 'one_energy_qmc']:
+            from_imports.append(('wfns.upgrades.amsgrad_fanpy', 'minimize'))
+            if solver_kwargs is None:
+                solver_kwargs = "learning_rate=0.01, beta1=0.9, beta2=0.99, epsilon=1e-8, maxiter=1000, counter_limit=10, xtol=1e-8, gtol=1e-8, ftol=1e-8"
+            solver_name = "minimize"
+        else:
+            #from_imports.append(("wfns.solver.equation", "minimize"))
+            from_imports.append(("wfns.upgrades.bfgs_fanpy", "bfgs_minimize"))
+            if solver_kwargs is None:
+                solver_kwargs = "method='BFGS', jac=objective.gradient, options={'gtol': 1e-8, 'disp':True}"
+            solver_name = "bfgs_minimize"
     elif solver == "root":
+        if objective == 'system_qmc':
+            raise NotImplementedError('system_qmc not supported with minimize solver')
         from_imports.append(("wfns.solver.system", "root"))
         solver_name = "root"
         if solver_kwargs is None:
@@ -256,6 +312,41 @@ def make_script(
         output += "import {}\n".format(i)
     for key, val in from_imports:
         output += "from {} import {}\n".format(key, val)
+    if ncores > 1:
+        output += "import multiprocessing\n"
+    output += "from wfns.upgrades import speedup_sd, speedup_sign\n"
+    if "apg" in wfn_type or wfn_type in ['ap1rog', 'apig']:
+        output += "import wfns.upgrades.speedup_apg\n"
+        output += "import wfns.upgrades.speedup_objective\n"
+    if 'ci' in wfn_type or wfn_type == 'network':
+        output += "import wfns.upgrades.speedup_objective\n"
+    if solver == "trustregion":
+        output += "from wfns.upgrades.trustregion_qmc_fanpy import minimize\n"
+        output += "from wfns.upgrades.trf_fanpy import least_squares\n"
+        if solver_kwargs is None:
+            solver_kwargs = (
+                'constraint_bounds=(-1e-1, 1e-1), energy_bound=-np.inf, norm_constraint=True, '
+                "options={'gtol': 1e-8, 'xtol': 1e-8, 'maxiter': 1000}"
+            )
+        solver_name = "minimize"
+    elif solver == "least_squares":
+        if objective != 'system_qmc':
+            output += "from wfns.upgrades.trf_fanpy import least_squares\n"
+        else:
+            output += "from wfns.upgrades.trf_qmc_fanpy import least_squares\n"
+        solver_name = "least_squares"
+        if solver_kwargs is None:
+            if objective != 'system_qmc':
+                solver_kwargs = (
+                    "xtol=1.0e-10, ftol=1.0e-10, gtol=1.0e-10, "
+                    "max_nfev=1000*objective.params.size, jac=objective.jacobian"
+                )
+            else:
+                solver_kwargs = (
+                    "xtol=1.0e-9, ftol=1.0e-9, gtol=1.0e-9, "
+                    "max_nfev=1000*objective.params.size, jac=objective.jacobian, "
+                    "tr_options={'cost_tol': 1e-10, 'counter_limit': 10}"
+                )
     output += "\n\n"
 
     output += "# Number of electrons\n"
@@ -330,7 +421,11 @@ def make_script(
 
     output += "# Initialize Hamiltonian\n"
     ham_init1 = "ham = {}(".format(ham_name)
-    ham_init2 = "one_int, two_int, energy_nuc_nuc=nuc_nuc, params={})\n".format(ham_params)
+    ham_init2 = "one_int, two_int, energy_nuc_nuc=nuc_nuc, params={}".format(ham_params)
+    if solver == 'cma':
+        ham_init2 += ')\n'
+    else:
+        ham_init2 += ', update_prev_params=True)\n'
     output += "\n".join(
         textwrap.wrap(ham_init1 + ham_init2, width=100, subsequent_indent=" " * len(ham_init1))
     )
@@ -359,7 +454,8 @@ def make_script(
     pspace1 = "pspace = sd_list("
     pspace2 = (
         "nelec, nspin//2, num_limit=None, exc_orders={}, spin=None, "
-        "seniority=wfn.seniority)\n".format(pspace)
+        #"seniority=wfn.seniority)\n".format(pspace)
+        "seniority=None)\n".format(pspace)
     )
     output += "\n".join(
         textwrap.wrap(pspace1 + pspace2, width=100, subsequent_indent=" " * len(pspace1))
@@ -381,20 +477,55 @@ def make_script(
     if save_chk is None:
         save_chk = ""
 
+    if objective in ['system', 'system_qmc', 'least_squares']:
+        if constraint == 'norm':
+            output += "# Set up constraints\n"
+            output += "norm = NormConstraint(wfn, refwfn=pspace, param_selection=param_selection)\n"
+            output += "weights = np.ones(len(pspace) + 1)\n"
+            output += "weights[-1] = 100\n\n"
+        elif constraint == 'energy':
+            output += "# Set up constraints\n"
+            output += "energy = EnergyConstraint(wfn, ham, param_selection=param_selection, refwfn=pspace,\n"
+            output += "                          ref_energy=-100, queue_size=4, min_diff=1e-2, simple=True)\n"
+            output += "weights = np.ones(len(pspace) + 1)\n"
+            output += "weights[-1] = 100\n\n"
+        else:
+            output += '# Set up weights\n'
+            output += "weights = np.ones(len(pspace))\n\n"
+
     output += "# Initialize objective\n"
-    if objective == "system":
-        objective1 = "objective = SystemEquations("
-        objective2 = (
-            "wfn, ham, param_selection=param_selection, "
-            "tmpfile='{}', pspace=pspace, refwfn=None, energy_type='compute', "
-            "energy=None, constraints=None, eqn_weights=None)\n".format(save_chk)
-        )
+    if objective in ["system", 'system_qmc']:
+        if solver == 'trustregion':
+            objective1 = "objective = SystemEquations("
+            if wfn_type != 'ap1rog':
+                objective2 = (
+                    "wfn, ham, param_selection=param_selection, "
+                    "tmpfile='{}', pspace=pspace, refwfn=pspace, energy_type='compute', "
+                    "energy=None, constraints=[], eqn_weights=weights)\n".format(save_chk)
+                )
+            else:
+                objective2 = (
+                    "wfn, ham, param_selection=param_selection, "
+                    "tmpfile='{}', pspace=pspace, refwfn=[pspace[0]], energy_type='compute', "
+                    "energy=None, constraints=[], eqn_weights=weights)\n".format(save_chk)
+                )
+        else:
+            objective1 = "objective = SystemEquations("
+            objective2 = (
+                "wfn, ham, param_selection=param_selection, "
+                "tmpfile='{}', pspace=pspace, refwfn={}, energy_type='variable', "
+                "energy=0.0, constraints=[{}], eqn_weights=weights)\n".format(
+                    save_chk, 'pspace' if wfn_type != 'ap1rog' else 'None', constraint if constraint else ''
+                )
+            )
     elif objective == "least_squares":
         objective1 = "objective = LeastSquaresEquations("
         objective2 = (
             "wfn, ham, param_selection=param_selection, "
-            "tmpfile='{}', pspace=pspace, refwfn=None, energy_type='compute', "
-            "energy=None, constraints=None, eqn_weights=None)\n".format(save_chk)
+            "tmpfile='{}', pspace=pspace, refwfn={}, energy_type='variable', "
+            "energy=0.0, constraints=[{}], eqn_weights=weights)\n".format(
+                save_chk, 'pspace' if wfn_type != 'ap1rog' else 'None', constraint if constraint else ''
+            )
         )
     elif objective == "variational":
         objective1 = "objective = TwoSidedEnergy("
@@ -403,25 +534,145 @@ def make_script(
             "tmpfile='{}', pspace_l=pspace, pspace_r=pspace, pspace_n=pspace)\n"
             "".format(save_chk)
         )
+    elif objective in ["one_energy", 'one_energy_qmc']:
+        objective1 = "objective = OneSidedEnergy("
+        objective2 = (
+            "wfn, ham, param_selection=param_selection, "
+            "tmpfile='{}', refwfn=pspace)\n"
+            "".format(save_chk)
+        )
+    elif objective == "one_energy_system":
+        objective1 = "objective = OneSidedEnergySystem("
+        objective2 = (
+            "wfn, ham, param_selection=param_selection, "
+            "tmpfile='{}', pspace=pspace, refwfn={}, energy_type='variable', "
+            "energy=0.0, constraints=[{}], eqn_weights=None, energy_weight=100)\n".format(
+                save_chk, 'pspace' if wfn_type != 'ap1rog' else 'None', constraint if constraint else ''
+            )
+        )
+    elif objective == "vqmc":
+        objective1 = "objective = VariationalQuantumMonteCarlo("
+        objective2 = (
+            "wfn, ham, param_selection=param_selection, "
+            "tmpfile='{}', refwfn=pspace, sample_size=200, olp_threshold=0.01)\n"
+            "".format(save_chk)
+        )
     output += "\n".join(
         textwrap.wrap(objective1 + objective2, width=100, subsequent_indent=" " * len(objective1))
     )
     output += "\n\n"
+    if objective == 'system':
+        output += 'objective.print_energy = False\n'
+    if objective == 'least_squares':
+        output += 'objective.print_energy = True\n'
+    if solver != 'cma' and objective in ['one_energy', 'one_energy_system']:
+        output += "objective.print_energy = True\n\n"
+    if constraint == 'energy':
+        output += 'objective.adaptive_weights = True\n'
+        output += 'objective.num_count = 10\n'
+        output += 'objective.decrease_factor = 5\n\n'
+    if objective in ['system_qmc', 'one_energy_qmc'] and solver != 'trustregion':
+        output += "wfn.olp_threshold = 0.001\n"
+        output += "objective.sample_size = 1000\n"
+
+    if solver == 'trustregion':
+        if objective == 'system_qmc':
+            output += "objective.adapt_type = ['pspace', 'norm', 'energy']\n"
+        else:
+            if wfn_type == 'ap1rog':
+                output += "objective.adapt_type = []\n"
+            else:
+                #output += "objective.adapt_type = ['norm', 'energy']\n"
+                output += "objective.adapt_type = []\n"
+        output += "wfn.olp_threshold = 0.001\n"
+        output += "objective.weight_type = 'ones'\n"
+        output += "objective.sample_size = len(pspace)\n"
+        output += "wfn.pspace_norm = objective.refwfn\n"
 
     if load_chk is not None:
-        output += "# Load checkpoint\n"
-        output += "chk_point_file = '{}'\n".format(load_chk)
-        output += "chk_point = np.load(chk_point_file)\n"
-        output += "objective.assign_params(chk_point)\n"
-        output += "print('Load checkpoint file: {}'.format(os.path.abspath(chk_point_file)))\n"
-        output += "\n"
+        if False:
+            output += "# Load checkpoint\n"
+            output += "chk_point_file = '{}'\n".format(load_chk)
+            output += "chk_point = np.load(chk_point_file)\n"
+            if objective in ["system", "system_qmc", "least_squares", "one_energy_system"]:
+                output += "if chk_point.size == objective.params.size - 1 and objective.energy_type == 'variable':\n"
+                output += '    objective.assign_params(np.hstack([chk_point, 0]))\n'
+                output += "elif chk_point.size - 1 == objective.params.size and objective.energy_type != 'variable':\n"
+                output += '    objective.assign_params(chk_point[:-1])\n'
+                output += 'else:\n'
+                output += "    objective.assign_params(chk_point)\n"
+            else:
+                output += "objective.assign_params(chk_point)\n"
+            output += "print('Load checkpoint file: {}'.format(os.path.abspath(chk_point_file)))\n"
+            output += "\n"
+            # check for unitary matrix
+            output += '# Load checkpoint hamiltonian unitary matrix\n'
+            output += "ham_params = chk_point[wfn.nparams:]\n"
+            output += "load_chk_um = '{}_um{}'.format(*os.path.splitext(chk_point_file))\n"
+            output += "if os.path.isfile(load_chk_um):\n"
+            output += "    ham._prev_params = ham_params.copy()\n" 
+            output += "    ham._prev_unitary = np.load(load_chk_um)\n" 
+            output += "ham.assign_params(ham_params)\n\n"
+        else:
+            output += "# Load checkpoint\n"
+            output += "import os\n"
+            output += "dirname, chk_point_file = os.path.split('{}')\n".format(load_chk)
+            output += "chk_point_file, ext = os.path.splitext(chk_point_file)\n"
+            output += "wfn.assign_params(np.load(os.path.join(dirname, chk_point_file + '_wfn' + ext)))\n"
+            output += "ham.assign_params(np.load(os.path.join(dirname, chk_point_file + '_ham' + ext)))\n"
+            output += "try:\n"
+            output += "    ham._prev_params = np.load(os.path.join(dirname, chk_point_file + '_ham_prev' + ext))\n"
+            output += "except FileNotFoundError:\n"
+            output += "    ham._prev_params = ham.params.copy()\n"
+            output += "ham._prev_unitary = np.load(os.path.join(dirname, chk_point_file + '_ham_um' + ext))\n"
+            output += "ham.assign_params(ham.params)\n"
+
+    if wfn_type in ['apg', 'apig', 'apsetg', 'apg2', 'apg3', 'apg4', 'apg5', 'apg6', 'apg7', 'doci', 'network']:
+        output += "# Normalize\n"
+        output += "wfn.normalize(pspace)\n\n"
+
+    # load energy
+    if objective in ["system", "system_qmc", "least_squares", "one_energy_system"] and solver != 'trustregion':
+        output += "# Set energies\n"
+        output += "energy_val = objective.get_energy_one_proj(pspace)\n"
+        output += "print(energy_val)\n"
+        output += "if objective.energy_type != 'compute':\n"
+        output += "    objective.energy.params = np.array([energy_val])\n\n"
+        if constraint == 'energy':
+            output += "# Set energy constraint\n"
+            output += "energy.ref_energy = energy_val - 15\n\n"
 
     if save_chk is None:
         save_chk = ""
     output += "# Solve\n"
+
+    if solver == "trustregion":
+        #output += "objective.tmpfile = 'checkpoint_step1.npy'\n"
+        #output += "results = least_squares(objective, tr_options={'cost_tol': 1e-6}, param_bounds=(-2, 2))\n"
+        #output += "print('Finished Step 1')\n"
+        #output += "constraint_bound = max(np.max(np.abs(objective.objective(objective.params))), 1e-4)\n"
+        #output += "constraint_bounds = (-constraint_bound, constraint_bound)\n"
+        #output += "print(constraint_bounds)\n"
+        #solver_kwargs = (
+        #    'constraint_bounds=constraint_bounds, energy_bound=-np.inf, norm_constraint=True, '
+        #    "options={'gtol': 1e-8, 'xtol': 1e-8, 'maxiter': 1000}, bounds=((-2, 2) for _ in range(objective.params.size))"
+        #)
+        #output += "objective.tmpfile = 'checkpoint.npy'\n"
+        pass
+
     if solver_name == "brute":
         output += "results = brute(wfn, ham, save_file='')\n"
         output += "print('Optimizing wavefunction: brute force diagonalization of CI matrix')\n"
+    elif objective == "one_energy" and ncores > 1:
+        results1 = "results = {}(".format(solver_name)
+        solver_kwargs += ', args=(parallel,)'
+        results2 = "objective, save_file='{}', {})\n".format(save_chk, solver_kwargs)
+        output += "print('Optimizing wavefunction: {} solver')\n".format(solver_name)
+        output += "parallel = multiprocessing.Pool({})\n".format(ncores)
+        output += "\n".join(
+            textwrap.wrap(results1 + results2, width=100, subsequent_indent=" " * len(results1))
+        )
+        output += "\n"
     else:
         results1 = "results = {}(".format(solver_name)
         results2 = "objective, save_file='{}', {})\n".format(save_chk, solver_kwargs)
@@ -430,6 +681,17 @@ def make_script(
             textwrap.wrap(results1 + results2, width=100, subsequent_indent=" " * len(results1))
         )
         output += "\n"
+    if solver == "trustregion":
+        pass
+        #output += "print('Finished Step 2')\n"
+        #output += "wfn.normalize(pspace)\n"
+        #output += "objective.tmpfile = 'checkpoint_step3.npy'\n"
+        #output += "results = least_squares(objective)\n"
+        #output += "objective.energy_type = 'variable'\n"
+        #output += "objective.param_selection.load_mask_container_params(objective.energy, True)\n"
+        #output += "objective.param_selection.load_masks_objective_params()\n"
+        #output += "objective.energy.assign_params(objective.get_energy_one_proj(objective.refwfn))\n"
+        #output += "results = least_squares(objective, energy_bounds=(-np.inf, np.inf), param_bounds=(-2, 2), variable_energy=True)\n"
     output += "\n"
 
     output += "# Results\n"
@@ -439,7 +701,7 @@ def make_script(
     output += "    print('Optimization was not successful: {}'.format(results['message']))\n"
     output += "print('Final Electronic Energy: {}'.format(results['energy']))\n"
     output += "print('Final Total Energy: {}'.format(results['energy'] + nuc_nuc))\n"
-    if objective == "system":
+    if objective in ["system", "system_qmc"]:
         output += "print('Cost: {}'.format(results['cost']))\n"
 
     if not all(save is None for save in [save_orbs, save_ham, save_wfn]):
@@ -453,6 +715,9 @@ def make_script(
     if save_ham is not None:
         output += "\n"
         output += "    np.save('{}', ham.params)".format(save_ham)
+        if solver != 'cma':
+            output += "\n"
+            output += "    np.save('{}_um{}', ham._prev_unitary)".format(*os.path.splitext(save_ham))
     if save_wfn is not None:
         output += "\n"
         output += "    np.save('{}', wfn.params)".format(save_wfn)
@@ -506,4 +771,5 @@ def main():
         save_chk=args.save_chk,
         filename=args.filename,
         memory=args.memory,
+        ncores=args.ncores,
     )

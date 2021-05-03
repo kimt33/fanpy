@@ -1,4 +1,5 @@
 """Base class for objectives related to solving the Schrodinger equation."""
+import os
 import numpy as np
 import wfns.backend.slater as slater
 from wfns.ham.base import BaseHamiltonian
@@ -6,6 +7,8 @@ from wfns.objective.base import BaseObjective
 from wfns.param import ParamMask
 from wfns.wfn.base import BaseWavefunction
 from wfns.wfn.ci.base import CIWavefunction
+
+from wfns.objective.schrodinger.cext import get_energy_one_proj, get_energy_one_proj_deriv
 
 
 class BaseSchrodinger(BaseObjective):
@@ -158,7 +161,7 @@ class BaseSchrodinger(BaseObjective):
         ----------
         sd : {int, np.int64, mpz}
             Slater Determinant against which the overlap is taken.
-        deriv : {int, None}
+        deriv : {int, np.ndarray, None}
             Index of the objective parameters with respect to which the overlap is derivatized.
             Default is no derivatization.
 
@@ -175,16 +178,39 @@ class BaseSchrodinger(BaseObjective):
         """
         # pylint: disable=C0103
         if deriv is None:
-            return sum(self.ham.integrate_wfn_sd(self.wfn, sd))
+            return np.sum(self.ham.integrate_sd_wfn(sd, self.wfn))
 
         # change derivative index
-        wfn_deriv = self.param_selection.derivative_index(self.wfn, deriv)
-        ham_deriv = self.param_selection.derivative_index(self.ham, deriv)
-        if wfn_deriv is not None:
-            return sum(self.ham.integrate_wfn_sd(self.wfn, sd, wfn_deriv=wfn_deriv))
-        # b/c the integral cannot be derivatized wrt both wfn and ham
-        if ham_deriv is not None:
-            return sum(self.ham.integrate_wfn_sd(self.wfn, sd, ham_deriv=ham_deriv))
+        if isinstance(deriv, np.ndarray):
+            wfn_deriv = [self.param_selection.derivative_index(self.wfn, i) for i in deriv]
+            wfn_mask = np.array([i is not None for i in wfn_deriv])
+            wfn_deriv = np.array([i for i in wfn_deriv if i is not None])
+
+            ham_deriv = [self.param_selection.derivative_index(self.ham, i) for i in deriv]
+            ham_mask = np.array([i is not None for i in ham_deriv])
+            ham_deriv = np.array([i for i in ham_deriv if i is not None])
+            ham_deriv = ham_deriv.astype(int)
+
+            results = np.zeros(deriv.size)
+            if wfn_deriv is not None:
+                results[wfn_mask] = np.array(
+                    [sum(self.ham.integrate_sd_wfn(sd, self.wfn, wfn_deriv=i)) for i in wfn_deriv]
+                )
+            if ham_deriv is not None:
+                results[ham_mask] = np.sum(
+                    self.ham.integrate_sd_wfn_deriv(sd, self.wfn, ham_deriv), axis=0
+                )
+            return results
+        else:
+            wfn_deriv = self.param_selection.derivative_index(self.wfn, deriv)
+            ham_deriv = self.param_selection.derivative_index(self.ham, deriv)
+            if wfn_deriv is not None:
+                return sum(self.ham.integrate_sd_wfn(sd, self.wfn, wfn_deriv=wfn_deriv))
+            # b/c the integral cannot be derivatized wrt both wfn and ham
+            if ham_deriv is not None:
+                return np.sum(
+                    self.ham.integrate_sd_wfn_deriv(sd, self.wfn, ham_derivs=np.array([ham_deriv]))
+                )
         return 0.0
 
     # FIXME: there are problems when ham is a composite hamiltonian (ham must distinguish between
@@ -281,6 +307,44 @@ class BaseSchrodinger(BaseObjective):
             If `refwfn` is not a CIWavefunction, int, or list/tuple of int.
 
         """
+        # define reference
+        if isinstance(refwfn, CIWavefunction):
+            # ref_sds = refwfn.sd_vec
+            # ref_coeffs = refwfn.params
+            # if deriv is not None:
+            #     ref_deriv = self.param_selection.derivative_index(refwfn, deriv)
+            #     if ref_deriv is None:
+            #         d_ref_coeffs = 0.0
+            #     else:
+            #         d_ref_coeffs = np.zeros(refwfn.nparams, dtype=float)
+            #         d_ref_coeffs[ref_deriv] = 1
+            raise ValueError("CI wavefunction as a reference wavefunction is not supported.")
+        elif isinstance(refwfn, int):
+            refwfn = [refwfn]
+
+        refwfn = np.array(refwfn)
+        # if deriv is None:
+        #     return get_energy_one_proj(self.wfn, self.ham, refwfn)
+
+        if isinstance(deriv, np.ndarray):
+            wfn_deriv = [self.param_selection.derivative_index(self.wfn, i) for i in deriv]
+            wfn_mask = np.array([i is not None for i in wfn_deriv])
+            wfn_deriv = np.array([i for i in wfn_deriv if i is not None])
+
+            ham_deriv = [self.param_selection.derivative_index(self.ham, i) for i in deriv]
+            ham_mask = np.array([i is not None for i in ham_deriv])
+            ham_deriv = np.array([i for i in ham_deriv if i is not None])
+            ham_deriv = ham_deriv.astype(int)
+
+            all_derivs = get_energy_one_proj_deriv(self.wfn, self.ham, refwfn)[1]
+            results = np.zeros(deriv.size)
+            if wfn_deriv is not None:
+                results[wfn_mask] = all_derivs[wfn_deriv]
+            if ham_deriv is not None:
+                results[ham_mask] = all_derivs[ham_deriv + self.wfn.nparams]
+            return results
+
+        # old code
         get_overlap = self.wrapped_get_overlap
         integrate_wfn_sd = self.wrapped_integrate_wfn_sd
 
@@ -296,7 +360,7 @@ class BaseSchrodinger(BaseObjective):
                     d_ref_coeffs = np.zeros(refwfn.nparams, dtype=float)
                     d_ref_coeffs[ref_deriv] = 1
         elif slater.is_sd_compatible(refwfn) or (
-            isinstance(refwfn, (list, tuple)) and all(slater.is_sd_compatible(sd) for sd in refwfn)
+            isinstance(refwfn, (list, tuple, np.ndarray)) and all(slater.is_sd_compatible(sd) for sd in refwfn)
         ):
             if slater.is_sd_compatible(refwfn):
                 refwfn = [refwfn]
@@ -453,3 +517,46 @@ class BaseSchrodinger(BaseObjective):
         )
         d_energy -= d_norm * np.sum(overlaps_l * ci_matrix * overlaps_r) / norm ** 2
         return d_energy
+        return d_energy
+
+    def save_params(self):
+        """Save all of the parameters in the `param_selection` to the temporary file.
+
+        All of the parameters are saved, even if it was frozen in the objective.
+
+        """
+        if self.tmpfile != "":
+            # np.save(self.tmpfile, self.param_selection.all_params)
+            header, ext = os.path.splitext(self.tmpfile)
+            try:
+                np.save('{}_wfn{}'.format(header, ext), self.wfn.params)
+            except (OSError, AttributeError):
+                pass
+            try:
+                np.save('{}_ham{}'.format(header, ext), self.ham.params)
+            except (OSError, AttributeError):
+                pass
+            try:
+                np.save('{}_ham_prev{}'.format(header, ext), self.ham._prev_params)
+            except (OSError, AttributeError):
+                pass
+            try:
+                np.save('{}_ham_um{}'.format(header, ext), self.ham._prev_unitary)
+            except (OSError, AttributeError):
+                pass
+            try:
+                np.save(header + '_pspace' + ext, self.pspace)
+            except (OSError, AttributeError):
+                pass
+            try:
+                np.save(header + '_refwfn' + ext, self.refwfn)
+            except (OSError, AttributeError):
+                pass
+            try:
+                np.save(header + '_pspace_norm' + ext, self.wfn.pspace_norm)
+            except (OSError, AttributeError):
+                pass
+            try:
+                np.save(header + '_eqn_weights' + ext, self.eqn_weights)
+            except (OSError, AttributeError):
+                pass

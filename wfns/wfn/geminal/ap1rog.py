@@ -1,4 +1,5 @@
 """Antisymmetric Product of One-Reference-Orbital (AP1roG) Geminals wavefunction."""
+import cachetools
 import numpy as np
 from wfns.backend import slater
 from wfns.wfn.base import BaseWavefunction
@@ -145,13 +146,13 @@ class AP1roG(APIG):
 
         """
         # pylint: disable=W0233,W0231
-        BaseWavefunction.__init__(self, nelec, nspin, dtype=dtype)
+        BaseWavefunction.__init__(self, nelec, nspin, dtype=dtype, memory=memory)
         self.assign_ngem(ngem=ngem)
         self.assign_ref_sd(sd=ref_sd)
         self.assign_orbpairs(orbpairs=orbpairs)
-        self.assign_params(params=params)
         self._cache_fns = {}
         self.load_cache()
+        self.assign_params(params=params)
 
     @property
     def template_params(self):
@@ -277,6 +278,7 @@ class AP1roG(APIG):
         self.dict_reforbpair_ind = dict_reforbpair_ind
         self.dict_ind_orbpair = {i: orbpair for orbpair, i in self.dict_orbpair_ind.items()}
 
+    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):
         """Calculate the overlap with the Slater determinant.
 
@@ -303,8 +305,15 @@ class AP1roG(APIG):
         )
 
         # FIXME: missing signature. see apig. Not a problem if alpha beta spin pairing
-        return self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created)
 
+        output = self.compute_permanent(row_inds=inds_annihilated, col_inds=inds_created)
+
+        if abs(output) > self.olp_threshold:
+            self.probable_sds[sd] = output
+        
+        return output
+
+    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
     def _olp_deriv(self, sd, deriv):
         """Calculate the derivative of the overlap with the Slater determinant.
 
@@ -389,7 +398,7 @@ class AP1roG(APIG):
             if inds_annihilated.size == inds_created.size == 0:
                 return 1.0
 
-            return self._cache_fns["overlap"](sd)
+            return self._olp(sd)
         # if derivatization
         if not isinstance(deriv, (int, np.int64)):
             raise TypeError("Index for derivatization must be provided as an integer.")
@@ -399,4 +408,7 @@ class AP1roG(APIG):
         if inds_annihilated.size == inds_created.size == 0:
             return 0.0
 
-        return self._cache_fns["overlap derivative"](sd, deriv)
+        return self._olp_deriv(sd, deriv)
+
+    def normalize(self, pspace=None):
+        pass

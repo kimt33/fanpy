@@ -382,3 +382,10 @@ class CIWavefunction(BaseWavefunction):
                 return 0.0
         except KeyError:
             return 0.0
+
+    def normalize(self, pspace=None):
+        if pspace is not None:
+            norm = sum(self.get_overlap(sd)**2 for sd in pspace)
+        else:
+            norm = sum(self.get_overlap(sd)**2 for sd in self.pspace_norm)
+        self.assign_params(self.params * norm ** (-0.5))

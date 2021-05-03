@@ -1,7 +1,7 @@
 """Parent class of the wavefunctions."""
 import abc
-import functools
 
+import cachetools
 import numpy as np
 from wfns.param import ParamContainer
 
@@ -90,6 +90,9 @@ class BaseWavefunction(ParamContainer):
         self.assign_memory(memory)
         # assign_params not included because it depends on template_params, which may involve
         # more attributes than is given above
+        self.probable_sds = {}
+        self.olp_threshold = 42
+        self.pspace_norm = set()
 
     @property
     def nspatial(self):
@@ -319,7 +322,7 @@ class BaseWavefunction(ParamContainer):
                     0.01j * scale * (np.random.rand(*self.params_shape).astype(complex) - 0.5)
                 )
 
-    def load_cache(self):
+    def load_cache(self, include_derivative=True):
         """Load the functions whose values will be cached.
 
         To minimize the cache size, the input is made as small as possible. Therefore, the cached
@@ -346,26 +349,19 @@ class BaseWavefunction(ParamContainer):
         # pylint: disable=C0103
         # assign memory allocated to cache
         if self.memory == np.inf:
-            memory = None
+            maxsize = 2**30
+        elif include_derivative:
+            maxsize = int(self.memory / 8 / (self.nparams + 1))
         else:
-            memory = int((self.memory - 5 * 8 * self.nparams) / (self.nparams + 1))
-
-        # create function that will be cached
-        @functools.lru_cache(maxsize=memory, typed=False)
-        def _olp(sd):
-            """Return cached overlap."""
-            return self._olp(sd)
-
-        @functools.lru_cache(maxsize=memory, typed=False)
-        def _olp_deriv(sd, deriv):
-            """Return cached derivative of the overlap."""
-            return self._olp_deriv(sd, deriv)
+            maxsize = int(self.memory / 8)
 
         # store the cached function
         self._cache_fns = {}
-        self._cache_fns["overlap"] = _olp
-        self._cache_fns["overlap derivative"] = _olp_deriv
+        self._cache_fns["overlap"] = cachetools.LRUCache(maxsize=maxsize)
+        if include_derivative:
+            self._cache_fns["overlap derivative"] = cachetools.LRUCache(maxsize=maxsize)
 
+    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap"])
     def _olp(self, sd):
         """Calculate the nontrivial overlap with the Slater determinant.
 
@@ -390,6 +386,7 @@ class BaseWavefunction(ParamContainer):
         # pylint: disable=C0103
         raise NotImplementedError
 
+    @cachetools.cachedmethod(cache=lambda obj: obj._cache_fns["overlap derivative"])
     def _olp_deriv(self, sd, deriv):
         """Calculate the nontrivial derivative of the overlap with the Slater determinant.
 
@@ -438,15 +435,16 @@ class BaseWavefunction(ParamContainer):
         try:
             if key is None:
                 for func in self._cache_fns.values():
-                    func.cache_clear()
+                    func.clear()
             else:
-                self._cache_fns[key].cache_clear()
+                self._cache_fns[key].clear()
         except KeyError as error:
             raise KeyError("Given function key is not present in _cache_fns") from error
         except AttributeError as error:
             raise AttributeError(
                 "Given cached function does not have decorator " "`functools.lru_cache`"
             ) from error
+        self.probable_sds = {}
 
     @abc.abstractproperty
     def params_shape(self):
@@ -508,3 +506,15 @@ class BaseWavefunction(ParamContainer):
         number of values cached this way.
 
         """
+
+    def update_pspace_norm(self, refwfn=None):
+        if refwfn:
+            self.pspace_norm = refwfn
+        else:
+            self.pspace_norm.add(max(self.probable_sds.keys(), key=lambda x: self.probable_sds[x]))
+        print('Adapt normalization pspace')
+        print(
+            sum(self.get_overlap(sd)**2 for sd in self.pspace_norm),
+            len(self.probable_sds), len(self.pspace_norm), max(self.probable_sds.values()),
+            'norm_pspace'
+        )

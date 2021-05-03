@@ -236,7 +236,6 @@ class LeastSquaresEquations(SystemEquations):
         temp = LeastSquaresEquations.num_eqns
         LeastSquaresEquations.num_eqns = SystemEquations.num_eqns
 
-        system_eqns = super().objective(params)
         # FIXME: There is probably a better way to implement this. In jacobian method, all of the
         # integrals needed to create the system_eqns is already available. This implementation would
         # repeat certain operations (but might not be that bad with caching?)

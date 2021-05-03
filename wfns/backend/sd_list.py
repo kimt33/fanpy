@@ -99,7 +99,7 @@ def sd_list(nelec, nspatial, num_limit=None, exc_orders=None, spin=None, seniori
     if num_limit is None:
         num_limit = -1
     elif not isinstance(num_limit, int):
-        raise TypeError("Number of Slater determinants should be an integer")
+        num_limit = int(num_limit)
 
     if exc_orders is None:
         exc_orders = range(1, nelec + 1)

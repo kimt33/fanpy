@@ -3,6 +3,7 @@ import numpy as np
 from wfns.backend import sd_list, slater
 from wfns.objective.base import BaseObjective
 from wfns.objective.constraints.norm import NormConstraint
+from wfns.objective.constraints.energy import EnergyConstraint
 from wfns.objective.schrodinger.base import BaseSchrodinger
 from wfns.param import ParamContainer
 from wfns.wfn.ci.base import CIWavefunction
@@ -201,6 +202,10 @@ class SystemEquations(BaseSchrodinger):
         if energy_type in ["fixed", "variable"]:
             self.param_selection.load_mask_container_params(self.energy, energy_type == "variable")
             self.param_selection.load_masks_objective_params()
+            for i in constraints:
+                if isinstance(i, EnergyConstraint):
+                    i.param_selection = self.param_selection
+                    i.energy_variable = self.energy
 
         self.assign_constraints(constraints)
         self.assign_eqn_weights(eqn_weights)
@@ -325,11 +330,12 @@ class SystemEquations(BaseSchrodinger):
                 raise TypeError(
                     "Each constraint must be an instance of BaseObjective or its " "child."
                 )
-            if constraint.param_selection != self.param_selection:
-                raise ValueError(
-                    "The given constraint must have the same parameter selection (in "
-                    "the form of ParamMask) as the objective."
-                )
+            #if constraint.param_selection != self.param_selection:
+            #    raise ValueError(
+            #        "The given constraint must have the same parameter selection (in "
+            #        "the form of ParamMask) as the objective."
+            #    )
+            constraint.param_selection = self.param_selection
         self.constraints = constraints
 
     def assign_eqn_weights(self, eqn_weights=None):
@@ -427,10 +433,10 @@ class SystemEquations(BaseSchrodinger):
                 ref_coeffs = np.array([get_overlap(i) for i in ref_sds])
 
             norm = np.sum(ref_coeffs * np.array([get_overlap(i) for i in ref_sds]))
-            energy = self.get_energy_one_proj(self.refwfn)
+            # energy = self.get_energy_one_proj(self.refwfn)
             energy = np.sum(ref_coeffs * np.array([integrate_wfn_sd(i) for i in ref_sds])) / norm
             # can be replaced with
-            energy = self.get_energy_one_proj(self.refwfn)
+            # energy = self.get_energy_one_proj(self.refwfn)
             self.energy.assign_params(energy)
 
         # objective
@@ -486,7 +492,7 @@ class SystemEquations(BaseSchrodinger):
         integrate_wfn_sd = self.wrapped_integrate_wfn_sd
 
         # indices with respect to which objective is derivatized
-        derivs = np.arange(params.size)
+        derivs = np.arange(params.size, dtype=int)
 
         # define reference
         if isinstance(self.refwfn, CIWavefunction):
@@ -532,7 +538,7 @@ class SystemEquations(BaseSchrodinger):
             norm = np.sum(ref_coeffs * ref_sds_olps)
             # integral <SD | H | Psi>
             ref_sds_ints = np.array([[integrate_wfn_sd(i)] for i in ref_sds])
-            d_ref_sds_ints = np.array([[integrate_wfn_sd(i, j) for j in derivs] for i in ref_sds])
+            d_ref_sds_ints = np.array([integrate_wfn_sd(i, derivs) for i in ref_sds])
             # integral <ref | H | Psi>
             ref_int = np.sum(ref_coeffs * ref_sds_ints)
             d_ref_int = np.sum(d_ref_coeffs * ref_sds_ints, axis=0)
@@ -547,7 +553,7 @@ class SystemEquations(BaseSchrodinger):
 
         # jacobian
         jac = np.empty((self.num_eqns, params.size))
-        jac[: self.nproj, :] = np.array([[integrate_wfn_sd(i, j) for j in derivs] for i in pspace])
+        jac[: self.nproj, :] = np.array([integrate_wfn_sd(i, derivs) for i in pspace])
         jac[: self.nproj, :] -= energy * np.array(
             [[get_overlap(i, j) for j in derivs] for i in pspace]
         )

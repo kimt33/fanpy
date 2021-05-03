@@ -17,6 +17,8 @@ def run_calc(
     solver=None,
     solver_kwargs=None,
     wfn_kwargs=None,
+    ham_noise=None,
+    wfn_noise=None,
     load_orbs=None,
     load_ham=None,
     load_wfn=None,
@@ -27,6 +29,7 @@ def run_calc(
     save_chk="",
     filename=None,
     memory=None,
+    ncores=1,
 ):
     """Script for running some basic calculations.
 
@@ -119,11 +122,14 @@ def run_calc(
         two_int_file,
         wfn_type,
         nuc_nuc=nuc_nuc,
-        wfn_kwargs=wfn_kwargs,
         optimize_orbs=optimize_orbs,
         pspace_exc=pspace_exc,
         objective=objective,
         solver=solver,
+        solver_kwargs=solver_kwargs,
+        wfn_kwargs=wfn_kwargs,
+        ham_noise=ham_noise,
+        wfn_noise=wfn_noise,
         load_orbs=load_orbs,
         load_ham=load_ham,
         load_wfn=load_wfn,
@@ -134,6 +140,7 @@ def run_calc(
         save_chk=save_chk,
         filename=-1,
         memory=memory,
+        ncores=1,
     )
     # run script
     # NOTE: Since the script is entirely generated from make_script, it should be more difficult to
@@ -158,6 +165,8 @@ def main():
         solver=args.solver,
         solver_kwargs=args.solver_kwargs,
         wfn_kwargs=args.wfn_kwargs,
+        ham_noise=args.ham_noise,
+        wfn_noise=args.wfn_noise,
         load_orbs=args.load_orbs,
         load_ham=args.load_ham,
         load_wfn=args.load_wfn,
@@ -167,4 +176,5 @@ def main():
         save_wfn=args.save_wfn,
         save_chk=args.save_chk,
         memory=args.memory,
+        ncores=args.ncores,
     )

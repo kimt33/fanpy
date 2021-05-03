@@ -176,17 +176,18 @@ class BaseHamiltonian(ParamContainer):
         coulomb = 0.0
         exchange = 0.0
 
-        def update_integrals(sd_m):
-            """Update integral values."""
-            coeff = wfn.get_overlap(sd_m, deriv=wfn_deriv)
-            sd_energy = self.integrate_sd_sd(sd, sd_m, deriv=ham_deriv)
-            return (
-                one_electron + coeff * sd_energy[0],
-                coulomb + coeff * sd_energy[1],
-                exchange + coeff * sd_energy[2],
-            )
+        # def update_integrals(sd_m):
+        #     """Update integral values."""
+        #     coeff = wfn.get_overlap(sd_m, deriv=wfn_deriv)
+        #     sd_energy = self.integrate_sd_sd(sd, sd_m, deriv=ham_deriv)
+        #     return (
+        #         one_electron + coeff * sd_energy[0],
+        #         coulomb + coeff * sd_energy[1],
+        #         exchange + coeff * sd_energy[2],
+        #     )
 
-        one_electron, coulomb, exchange = update_integrals(sd)
+        one_electron, coulomb, exchange = self._integrate_sd_sds_zero(occ_alpha, occ_beta)
+        update_integrals(sd)
         for counter_i, i in enumerate(occ_indices):
             for counter_a, a in enumerate(vir_indices):
                 sd_m = slater.excite(sd, i, a)

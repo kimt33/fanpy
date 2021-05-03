@@ -44,6 +44,7 @@ def check_inputs(
     memory=None,
     solver_kwargs=None,
     wfn_kwargs=None,
+    ncores=None
 ):
     """Check if the given inputs are compatible with the scripts.
 
@@ -183,6 +184,13 @@ def check_inputs(
         "apig",
         "apsetg",
         "apg",
+        "apg2",
+        "apg3",
+        "apg4",
+        "apg5",
+        "apg6",
+        "apg7",
+        "network",
     ]
     if wfn_type not in wfn_list:
         raise ValueError(
@@ -197,30 +205,31 @@ def check_inputs(
         isinstance(pspace_exc, (list, tuple)) and all(isinstance(i, int) for i in pspace_exc)
     ):
         raise TypeError("Project space must be given as list/tuple of integers.")
-    elif any(i <= 0 or i > nelec for i in pspace_exc):
+    elif any(i < 0 or i > nelec for i in pspace_exc):
         raise ValueError(
             "Projection space must contain orders of excitations that are greater than"
             " 0 and less than or equal to the number of electrons."
         )
 
     # check objective
-    if objective not in [None, "system", "least_squares", "variational"]:
+    if objective not in [None, "system", "least_squares", "variational", "one_energy", 'one_energy_system', 'system_qmc', 'vqmc', 'one_energy_qmc']:
         raise ValueError("Objective must be one of `system`, `least_squares`, or `variational`.")
 
     # check solver
-    if solver not in [None, "diag", "cma", "minimize", "least_squares", "root"]:
+    if solver not in [None, "diag", "cma", "minimize", "least_squares", "root", "trustregion"]:
+        print(solver)
         raise ValueError(
             "Solver must be one of `cma`, `diag`, `minimize`, `least_squares`, or " "`root`."
         )
 
     # check compatibility b/w objective and solver
-    if solver in ["cma", "minimize"] and objective not in ["least_squares", "variational"]:
+    if solver in ["cma", "minimize"] and objective not in ["least_squares", "variational", "one_energy", 'one_energy_system', 'vqmc', 'one_energy_qmc']:
         raise ValueError(
             "Given solver, `{}`, is only compatible with Schrodinger equation "
             "(objective) that consists of one equation (`least_squares` and "
             "`variational`)".format(solver)
         )
-    elif solver in ["least_squares", "root"] and objective != "system":
+    elif solver in ["least_squares", "root", "trustregion"] and objective not in ["system", 'system_qmc']:
         raise ValueError(
             "Given solver, `{}`, is only compatible with Schrodinger equation "
             "(objective) as a systems of equations (`system`)".format(solver)
@@ -251,8 +260,8 @@ def check_inputs(
             continue
         if not isinstance(name, str):
             raise TypeError("Name of the file must be given as a string.")
-        if "load" in varname and not os.path.isfile(name):
-            raise ValueError("Cannot find the given file, {}.".format(name))
+        #if "load" in varname and not os.path.isfile(name):
+        #    raise ValueError("Cannot find the given file, {}.".format(name))
         if "\n" in name or ";" in name:
             raise ValueError(
                 "There can be no newline or ';' in the filename. This will hopefully prevent code "
@@ -278,6 +287,16 @@ def check_inputs(
                 "There can be no newline or ';' in the keyword arguments. This will hopefully "
                 "prevent code injection."
             )
+
+    # check number of cores
+    if ncores is None:
+        pass
+    elif not isinstance(ncores, int):
+        raise TypeError("Number of cores must be integer.")
+    elif ncores <= 0:
+        raise ValueError("Number of cores must be greater than or equal to zero.")
+    elif ncores > 1 and objective != "one_energy":
+        raise ValueError("Multiple cores are only supported for one_energy.")
 
 
 parser = argparse.ArgumentParser()
@@ -340,7 +359,7 @@ def parser_add_arguments():
         required=False,
         help=(
             "Type of the objective that will be used. Must be one of `system`, `least_squares`, "
-            "and `variational`. Default is `least_squares`"
+            "and `variational`, or `one_energy`. Default is `least_squares`"
         ),
     )
     parser.add_argument(
@@ -462,4 +481,11 @@ def parser_add_arguments():
         default=None,
         required=False,
         help="Memory available to run the calculation.",
+    )
+    parser.add_argument(
+        "--ncores",
+        type=int,
+        default=1,
+        required=False,
+        help="Number of cores used in the calculation.",
     )
